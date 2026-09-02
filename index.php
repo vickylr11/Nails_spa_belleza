@@ -5,6 +5,8 @@ require_once "conexion/conexion.php";
 
 $titulo = "Inicio - Nails Spa Belleza";
 
+
+
 $consulta = $conexion->query("
     SELECT COUNT(*) AS total
     FROM reservas
@@ -41,6 +43,7 @@ require_once "includes/header.php";
 
 <section class="hero">
 
+
     <div class="hero-text">
 
         <span class="etiqueta">
@@ -63,6 +66,8 @@ require_once "includes/header.php";
             más te convenga.
 
         </p>
+
+        
 
         <div class="hero-botones">
 
@@ -168,6 +173,8 @@ require_once "includes/header.php";
             <span>
                 Servicios
             </span>
+
+        
 
         </div>
 

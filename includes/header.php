@@ -18,57 +18,40 @@ if (!isset($titulo)) {
 
     <title><?= htmlspecialchars($titulo) ?></title>
 
-    <link
-        rel="stylesheet"
-        href="/NAILS-SPA-BELLEZA/css/estilos.css"
-    >
-
+    <link rel="stylesheet" href="css/estilo.css">
 </head>
 
 <body>
-
 <header class="navbar">
+    <nav class="menu">
+
+    <a href="index.php">Inicio</a>
+
+    <a href="paginas/reservar.php">Reservar</a>
+
+    <a href="paginas/agenda.php">Agenda</a>
+
+    <a href="paginas/horarios.php">Horarios</a>
+
+    <a href="paginas/clientes.php">Clientes</a>
+
+</nav>
+
+<a href="paginas/reservar.php" class="btn-nueva-cita">
+    + Nueva cita
+</a>
 
     <a
-        href="/NAILS-SPA-BELLEZA/"
+        href="/NAILS-SPA-BELLEZA/index.php"
         class="logo"
     >
         💅
         <span>Nails Spa Belleza</span>
     </a>
 
-    <nav>
-
-        <a href="/NAILS-SPA-BELLEZA/">
-            Inicio
-        </a>
-
-        <a href="/NAILS-SPA-BELLEZA/paginas/reservar.php">
-            Reservar
-        </a>
-
-        <a href="/NAILS-SPA-BELLEZA/paginas/agenda.php">
-            Agenda
-        </a>
-
-        <a href="/NAILS-SPA-BELLEZA/paginas/horarios.php">
-            Horarios
-        </a>
-
-        <a href="/NAILS-SPA-BELLEZA/paginas/clientes.php">
-            Clientes
-        </a>
-
-    </nav>
-
-    <a
-        href="/NAILS-SPA-BELLEZA/paginas/reservar.php"
-        class="btn-reserva"
-    >
-        + Nueva cita
-    </a>
-
 </header>
+
+<main>
 
 <main>
     

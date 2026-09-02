@@ -8,6 +8,63 @@
     box-sizing: border-box;
 }
 
+/* Barra de navegación */
+nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    height: 72px;
+    background: #fff;
+}
+
+/* Contenedor de los enlaces */
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Botones de navegación */
+.nav-links a {
+    text-decoration: none;
+    color: #4a3944;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+/* Al pasar el mouse */
+.nav-links a:hover {
+    background: #fbe7f1;
+    color: #b0175a;
+}
+
+/* Página activa */
+.nav-links a.active {
+    background: #f7d8e7;
+    color: #b0175a;
+}
+
+/* Botón Nueva cita */
+.btn-nueva-cita {
+    background: #b0175a;
+    color: white;
+    padding: 11px 20px;
+    border-radius: 22px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.btn-nueva-cita:hover {
+    background: #920f49;
+    transform: translateY(-1px);
+}
+
 :root {
     --vino: #a71958;
     --vino-oscuro: #76103f;
