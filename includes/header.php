@@ -1,7 +1,9 @@
 <?php
+
 if (!isset($titulo)) {
     $titulo = "Nails Spa Belleza";
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -18,40 +20,80 @@ if (!isset($titulo)) {
 
     <title><?= htmlspecialchars($titulo) ?></title>
 
-    <link rel="stylesheet" href="css/estilo.css">
+    <link
+        rel="stylesheet"
+        href="/NAILS_SPA_BELLEZA/css/estilo.css"
+    >
+
 </head>
 
 <body>
+
 <header class="navbar">
-    <nav class="menu">
-
-    <a href="index.php">Inicio</a>
-
-    <a href="paginas/reservar.php">Reservar</a>
-
-    <a href="paginas/agenda.php">Agenda</a>
-
-    <a href="paginas/horarios.php">Horarios</a>
-
-    <a href="paginas/clientes.php">Clientes</a>
-
-</nav>
-
-<a href="paginas/reservar.php" class="btn-nueva-cita">
-    + Nueva cita
-</a>
 
     <a
-        href="/NAILS-SPA-BELLEZA/index.php"
+        href="/NAILS_SPA_BELLEZA/index.php"
         class="logo"
     >
         💅
         <span>Nails Spa Belleza</span>
     </a>
 
+
+    <nav class="menu">
+
+    <a href="/NAILS_SPA_BELLEZA/">Inicio</a>
+
+    <a href="/NAILS_SPA_BELLEZA/paginas/reservar.php">
+        Reservar
+    </a>
+
+    <a href="/NAILS_SPA_BELLEZA/paginas/agenda.php">
+        Agenda
+    </a>
+
+    <a href="/NAILS_SPA_BELLEZA/paginas/horarios.php">
+        Horarios
+    </a>
+
+    <a href="/NAILS_SPA_BELLEZA/paginas/clientes.php">
+        Clientes
+    </a>
+
+</nav>
+
+<style>
+.navbar .menu {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar .menu a {
+    display: inline-block;
+    padding: 12px 18px;
+    border-radius: 25px;
+    background: #fff0f6;
+    color: #b7195b;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 700;
+    transition: .2s;
+}
+
+.navbar .menu a:hover {
+    background: #b7195b;
+    color: #fff;
+}
+</style>
+
+    <a
+        href="/NAILS_SPA_BELLEZA/paginas/reservar.php"
+        class="btn-reserva"
+    >
+        + Nueva cita
+    </a>
+
 </header>
 
 <main>
-
-<main>
-    

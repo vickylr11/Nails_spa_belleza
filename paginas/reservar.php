@@ -51,7 +51,7 @@ require_once "../includes/header.php";
 
 
         <form
-            action="../acciones/guardar_reserva.php"
+            action="../acciones/guardar.reserva.php"
             method="POST"
             id="formReserva"
         >

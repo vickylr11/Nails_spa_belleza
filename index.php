@@ -66,6 +66,9 @@ require_once "includes/header.php";
             más te convenga.
 
         </p>
+        <div class="servicio-icono img_stick_U">
+            <img src="antiguo/img/manicure.clasico.png" alt="Manicure Clásico">
+        </div>
 
         
 
@@ -171,7 +174,7 @@ require_once "includes/header.php";
             </strong>
 
             <span>
-                Servicios
+                Servicios 
             </span>
 
         

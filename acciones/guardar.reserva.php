@@ -3,30 +3,30 @@
 require_once "../conexion/conexion.php";
 
 
+// ==========================================
+// SOLO PERMITIR POST
+// ==========================================
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-
     header("Location: ../paginas/reservar.php");
-
     exit;
-
 }
 
 
+// ==========================================
+// RECIBIR DATOS
+// ==========================================
+
 $nombre = trim($_POST['nombre'] ?? '');
-
 $telefono = trim($_POST['telefono'] ?? '');
-
 $correo = trim($_POST['correo'] ?? '');
-
 $id_servicio = intval($_POST['id_servicio'] ?? 0);
-
 $fecha = $_POST['fecha'] ?? '';
-
 $hora = $_POST['hora'] ?? '';
 
 
 // ==========================================
-// VALIDACIONES
+// VALIDAR DATOS
 // ==========================================
 
 if (
@@ -36,14 +36,11 @@ if (
     $fecha === '' ||
     $hora === ''
 ) {
-
     header(
         "Location: ../paginas/reservar.php?error=" .
         urlencode("Completa todos los campos obligatorios.")
     );
-
     exit;
-
 }
 
 
@@ -52,19 +49,43 @@ if (
 // ==========================================
 
 if ($fecha < date('Y-m-d')) {
-
     header(
         "Location: ../paginas/reservar.php?error=" .
         urlencode("No puedes reservar una fecha pasada.")
     );
-
     exit;
-
 }
 
 
 // ==========================================
-// COMPROBAR HORARIO
+// COMPROBAR QUE EL SERVICIO EXISTE
+// ==========================================
+
+$stmt = $conexion->prepare("
+    SELECT id_servicio
+    FROM servicios
+    WHERE id_servicio = ?
+    AND activo = 1
+");
+
+if (!$stmt) {
+    die("Error SQL al buscar el servicio: " . $conexion->error);
+}
+
+$stmt->bind_param("i", $id_servicio);
+$stmt->execute();
+
+$resultado = $stmt->get_result();
+
+if ($resultado->num_rows === 0) {
+    die("El servicio seleccionado no existe o está inactivo.");
+}
+
+$stmt->close();
+
+
+// ==========================================
+// COMPROBAR HORARIO DISPONIBLE
 // ==========================================
 
 $stmt = $conexion->prepare("
@@ -74,6 +95,10 @@ $stmt = $conexion->prepare("
     AND hora = ?
     AND estado != 'Cancelada'
 ");
+
+if (!$stmt) {
+    die("Error SQL al comprobar el horario: " . $conexion->error);
+}
 
 $stmt->bind_param(
     "ss",
@@ -85,21 +110,19 @@ $stmt->execute();
 
 $resultado = $stmt->get_result();
 
-
 if ($resultado->num_rows > 0) {
-
     header(
         "Location: ../paginas/reservar.php?error=" .
         urlencode("Ese horario ya está ocupado.")
     );
-
     exit;
-
 }
+
+$stmt->close();
 
 
 // ==========================================
-// BUSCAR CLIENTE
+// BUSCAR CLIENTE POR TELÉFONO
 // ==========================================
 
 $stmt = $conexion->prepare("
@@ -108,29 +131,40 @@ $stmt = $conexion->prepare("
     WHERE telefono = ?
 ");
 
-$stmt->bind_param(
-    "s",
-    $telefono
-);
+if (!$stmt) {
+    die("Error SQL al buscar el cliente: " . $conexion->error);
+}
 
+$stmt->bind_param("s", $telefono);
 $stmt->execute();
 
 $resultado = $stmt->get_result();
 
 
+// ==========================================
+// CLIENTE EXISTENTE
+// ==========================================
+
 if ($resultado->num_rows > 0) {
 
     $cliente = $resultado->fetch_assoc();
 
-    $id_cliente = $cliente['id_cliente'];
+    $id_cliente = intval($cliente['id_cliente']);
 
-    // Actualizar nombre y correo
+    $stmt->close();
+
+
+    // Actualizar datos del cliente
 
     $actualizar = $conexion->prepare("
         UPDATE clientes
         SET nombre = ?, correo = ?
         WHERE id_cliente = ?
     ");
+
+    if (!$actualizar) {
+        die("Error SQL al actualizar cliente: " . $conexion->error);
+    }
 
     $actualizar->bind_param(
         "ssi",
@@ -139,17 +173,33 @@ if ($resultado->num_rows > 0) {
         $id_cliente
     );
 
-    $actualizar->execute();
+    if (!$actualizar->execute()) {
+        die(
+            "Error al actualizar el cliente: " .
+            $actualizar->error
+        );
+    }
+
+    $actualizar->close();
+
+
+// ==========================================
+// CLIENTE NUEVO
+// ==========================================
 
 } else {
 
-    // Crear cliente
+    $stmt->close();
 
     $insertar = $conexion->prepare("
         INSERT INTO clientes
         (nombre, telefono, correo)
         VALUES (?, ?, ?)
     ");
+
+    if (!$insertar) {
+        die("Error SQL al crear cliente: " . $conexion->error);
+    }
 
     $insertar->bind_param(
         "sss",
@@ -158,10 +208,16 @@ if ($resultado->num_rows > 0) {
         $correo
     );
 
-    $insertar->execute();
+    if (!$insertar->execute()) {
+        die(
+            "Error al crear el cliente: " .
+            $insertar->error
+        );
+    }
 
     $id_cliente = $conexion->insert_id;
 
+    $insertar->close();
 }
 
 
@@ -171,9 +227,16 @@ if ($resultado->num_rows > 0) {
 
 $insertar_reserva = $conexion->prepare("
     INSERT INTO reservas
-    (id_cliente, id_servicio, fecha, hora)
-    VALUES (?, ?, ?, ?)
+    (id_cliente, id_servicio, fecha, hora, estado)
+    VALUES (?, ?, ?, ?, 'Pendiente')
 ");
+
+if (!$insertar_reserva) {
+    die(
+        "ERROR AL PREPARAR LA RESERVA: " .
+        $conexion->error
+    );
+}
 
 $insertar_reserva->bind_param(
     "iiss",
@@ -184,22 +247,27 @@ $insertar_reserva->bind_param(
 );
 
 
-if ($insertar_reserva->execute()) {
+if (!$insertar_reserva->execute()) {
 
-    header(
-        "Location: ../paginas/agenda.php?mensaje=" .
-        urlencode("La reserva fue creada correctamente.")
+    die(
+        "ERROR AL GUARDAR LA RESERVA: " .
+        $insertar_reserva->error
     );
-
-    exit;
-
-} else {
-
-    header(
-        "Location: ../paginas/reservar.php?error=" .
-        urlencode("No fue posible guardar la reserva.")
-    );
-
-    exit;
 
 }
+
+$insertar_reserva->close();
+
+
+// ==========================================
+// TODO CORRECTO
+// ==========================================
+
+header(
+    "Location: ../paginas/agenda.php?mensaje=" .
+    urlencode("La reserva fue creada correctamente.")
+);
+
+exit;
+
+?>
