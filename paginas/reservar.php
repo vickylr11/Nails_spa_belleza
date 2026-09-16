@@ -51,165 +51,195 @@ require_once "../includes/header.php";
 
 
         <form
-            action="../acciones/guardar.reserva.php"
-            method="POST"
-            id="formReserva"
+    action="../acciones/guardar.reserva.php"
+    method="POST"
+    id="formReserva"
+>
+
+    <div class="campo-reserva">
+        <label>
+            Nombre completo
+        </label>
+
+        <input
+            type="text"
+            name="nombre"
+            placeholder="Ej: María Rodríguez"
+            required
+        >
+    </div>
+
+
+    <div class="campo-reserva">
+        <label>
+            Teléfono
+        </label>
+
+        <input
+            type="tel"
+            name="telefono"
+            placeholder="Ej: 3001234567"
+            required
+        >
+    </div>
+
+
+    <div class="campo-reserva">
+        <label>
+            Correo electrónico
+        </label>
+
+        <input
+            type="email"
+            name="correo"
+            placeholder="correo@ejemplo.com"
+        >
+    </div>
+
+
+    <div class="campo-reserva">
+        <label>
+            Servicio
+        </label>
+
+        <select
+            name="id_servicio"
+            required
         >
 
-            <label>
-                Nombre completo
-            </label>
+            <option value="">
+                Selecciona un servicio
+            </option>
 
-            <input
-                type="text"
-                name="nombre"
-                placeholder="Ej: María Rodríguez"
-                required
-            >
+            
 
+            <?php
 
-            <label>
-                Teléfono
-            </label>
+            $servicios = $conexion->query("
+                SELECT *
+                FROM servicios
+                WHERE activo = 1
+                ORDER BY nombre
+            ");
 
-            <input
-                type="tel"
-                name="telefono"
-                placeholder="Ej: 3001234567"
-                required
-            >
+            while ($servicio = $servicios->fetch_assoc()):
 
+            ?>
 
-            <label>
-                Correo electrónico
-            </label>
+                <option
+                    value="<?= $servicio['id_servicio'] ?>"
+                    <?= $servicio_seleccionado == $servicio['id_servicio']
+                        ? 'selected'
+                        : '' ?>
+                >
 
-            <input
-                type="email"
-                name="correo"
-                placeholder="correo@ejemplo.com"
-            >
+                    <?= htmlspecialchars($servicio['nombre']) ?>
 
+                    -
+                    $<?= number_format(
+                        $servicio['precio'],
+                        0,
+                        ',',
+                        '.'
+                    ) ?>
 
-            <label>
-                Servicio
-            </label>
-
-            <select
-                name="id_servicio"
-                required
-            >
-
-                <option value="">
-                    Selecciona un servicio
                 </option>
 
-                <?php
+            <?php endwhile; ?>
 
-                $servicios = $conexion->query("
-                    SELECT *
-                    FROM servicios
-                    WHERE activo = 1
-                    ORDER BY nombre
-                ");
+        </select>
+    </div>
 
-                while ($servicio = $servicios->fetch_assoc()):
+    <div class="campo-reserva">
 
-                ?>
+    <label>
+        Manicurista
+    </label>
 
-                    <option
-                        value="<?= $servicio['id_servicio'] ?>"
-                        <?= $servicio_seleccionado == $servicio['id_servicio']
-                            ? 'selected'
-                            : '' ?>
-                    >
+    <select
+        name="manicurista"
+        required
+    >
 
-                        <?= htmlspecialchars($servicio['nombre']) ?>
+        <option value="">
+            Selecciona una manicurista
+        </option>
 
-                        -
-                        $<?= number_format(
-                            $servicio['precio'],
-                            0,
-                            ',',
-                            '.'
-                        ) ?>
+        <option value="Marangeles Perez">
+            Marangeles Perez
+        </option>
 
-                    </option>
+        <option value="Victoria Lemos">
+            Victoria Lemos
+        </option>
 
-                <?php endwhile; ?>
+        <option value="Jennifer Atencia">
+            Jennifer Atencia
+        </option>
 
-            </select>
+        <option value="Valeria Albaran">
+            Valeria Albaran
+        </option>
 
+    </select>
 
-            <label>
-                Fecha
-            </label>
-
-            <input
-                type="date"
-                name="fecha"
-                id="fecha"
-                min="<?= date('Y-m-d') ?>"
-                required
-            >
+</div>
 
 
-            <label>
-                Hora
-            </label>
+    <div class="campo-reserva">
+        <label>
+            Fecha
+        </label>
 
-            <select
-                name="hora"
-                required
-            >
-
-                <option value="">
-                    Selecciona una hora
-                </option>
-
-                <option value="09:00:00">
-                    09:00 AM
-                </option>
-
-                <option value="10:00:00">
-                    10:00 AM
-                </option>
-
-                <option value="11:00:00">
-                    11:00 AM
-                </option>
-
-                <option value="12:00:00">
-                    12:00 PM
-                </option>
-
-                <option value="14:00:00">
-                    02:00 PM
-                </option>
-
-                <option value="15:00:00">
-                    03:00 PM
-                </option>
-
-                <option value="16:00:00">
-                    04:00 PM
-                </option>
-
-                <option value="17:00:00">
-                    05:00 PM
-                </option>
-
-            </select>
+        <input
+            type="date"
+            name="fecha"
+            id="fecha"
+            min="<?= date('Y-m-d') ?>"
+            required
+        >
+    </div>
 
 
-            <button
-                type="submit"
-                class="btn-principal btn-completo"
-            >
-                Confirmar reserva
-            </button>
+    <div class="campo-reserva">
+        <label>
+            Hora
+        </label>
 
-        </form>
+        <select
+            name="hora"
+            required
+        >
+
+            <option value="">
+                Selecciona una hora
+            </option>
+
+            <option value="09:00:00">09:00 AM</option>
+            <option value="10:00:00">10:00 AM</option>
+            <option value="11:00:00">11:00 AM</option>
+            <option value="12:00:00">12:00 PM</option>
+            <option value="14:00:00">02:00 PM</option>
+            <option value="15:00:00">03:00 PM</option>
+            <option value="16:00:00">04:00 PM</option>
+            <option value="17:00:00">05:00 PM</option>
+
+        </select>
+    </div>
+
+
+    <div class="campo-boton">
+
+        <button
+            type="submit"
+            class="btn-principal btn-completo"
+        >
+            Confirmar reserva
+        </button>
+
+    </div>
+
+</form>
 
     </div>
 

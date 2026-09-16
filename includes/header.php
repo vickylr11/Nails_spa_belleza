@@ -32,12 +32,16 @@ if (!isset($titulo)) {
 <header class="navbar">
 
     <a
-        href="/NAILS_SPA_BELLEZA/index.php"
-        class="logo"
+    href="/NAILS_SPA_BELLEZA/index.php"
+    class="logo"
+>
+    <img
+        src="/NAILS_SPA_BELLEZA/ft/img/foto1.png"
+        alt="Nails Spa Belleza"
     >
-        💅
-        <span>Nails Spa Belleza</span>
-    </a>
+
+    <span>Nails Spa Belleza</span>
+</a>
 
 
     <nav class="menu">
