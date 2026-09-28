@@ -52,17 +52,7 @@ if (!isset($titulo)) {
         Reservar
     </a>
 
-    <a href="/NAILS_SPA_BELLEZA/paginas/agenda.php">
-        Agenda
-    </a>
-
-    <a href="/NAILS_SPA_BELLEZA/paginas/horarios.php">
-        Horarios
-    </a>
-
-    <a href="/NAILS_SPA_BELLEZA/paginas/clientes.php">
-        Clientes
-    </a>
+    
 
 </nav>
 

@@ -23,7 +23,7 @@ $correo = trim($_POST['correo'] ?? '');
 $id_servicio = intval($_POST['id_servicio'] ?? 0);
 $fecha = $_POST['fecha'] ?? '';
 $hora = $_POST['hora'] ?? '';
-
+$manicurista = trim($_POST['manicurista'] ?? '');
 
 // ==========================================
 // VALIDAR DATOS
@@ -34,7 +34,8 @@ if (
     $telefono === '' ||
     $id_servicio <= 0 ||
     $fecha === '' ||
-    $hora === ''
+    $hora === '' ||
+    $manicurista === ''
 ) {
     header(
         "Location: ../paginas/reservar.php?error=" .
@@ -45,14 +46,52 @@ if (
 
 
 // ==========================================
-// VALIDAR FECHA
+// VALIDAR FECHA Y HORA
 // ==========================================
 
-if ($fecha < date('Y-m-d')) {
+$fechaActual = date('Y-m-d');
+$horaActual = date('H:i:s');
+
+if ($fecha < $fechaActual) {
+
     header(
         "Location: ../paginas/reservar.php?error=" .
         urlencode("No puedes reservar una fecha pasada.")
     );
+
+    exit;
+}
+
+
+// ==========================================
+// NO PERMITIR HORAS PASADAS HOY
+// ==========================================
+
+if (
+    $fecha === $fechaActual &&
+    $hora <= $horaActual
+) {
+
+    header(
+        "Location: ../paginas/reservar.php?error=" .
+        urlencode("Esa hora ya pasó. Selecciona otra hora.")
+    );
+
+    exit;
+}
+
+
+// ==========================================
+// DESCANSO DE 12:00 PM A 1:00 PM
+// ==========================================
+
+if ($hora === '12:00:00') {
+
+    header(
+        "Location: ../paginas/reservar.php?error=" .
+        urlencode("De 12:00 PM a 1:00 PM es horario de descanso.")
+    );
+
     exit;
 }
 
@@ -93,6 +132,7 @@ $stmt = $conexion->prepare("
     FROM reservas
     WHERE fecha = ?
     AND hora = ?
+    AND manicurista = ?
     AND estado != 'Cancelada'
 ");
 
@@ -101,9 +141,10 @@ if (!$stmt) {
 }
 
 $stmt->bind_param(
-    "ss",
+    "sss",
     $fecha,
-    $hora
+    $hora,
+    $manicurista
 );
 
 $stmt->execute();
@@ -227,8 +268,8 @@ if ($resultado->num_rows > 0) {
 
 $insertar_reserva = $conexion->prepare("
     INSERT INTO reservas
-    (id_cliente, id_servicio, fecha, hora, estado)
-    VALUES (?, ?, ?, ?, 'Pendiente')
+    (id_cliente, id_servicio, fecha, hora, estado, manicurista)
+    VALUES (?, ?, ?, ?, 'Pendiente', ?)
 ");
 
 if (!$insertar_reserva) {
@@ -239,21 +280,19 @@ if (!$insertar_reserva) {
 }
 
 $insertar_reserva->bind_param(
-    "iiss",
+    "iisss",
     $id_cliente,
     $id_servicio,
     $fecha,
-    $hora
+    $hora,
+    $manicurista
 );
 
-
 if (!$insertar_reserva->execute()) {
-
     die(
         "ERROR AL GUARDAR LA RESERVA: " .
         $insertar_reserva->error
     );
-
 }
 
 $insertar_reserva->close();
