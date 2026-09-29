@@ -2,6 +2,8 @@
 
 require_once "../conexion/conexion.php";
 
+$base = "../";
+
 $titulo = "Reservar cita - Nails Spa Belleza";
 
 $servicio_seleccionado = isset($_GET['servicio'])
@@ -49,6 +51,14 @@ require_once "../includes/header.php";
 
         <?php endif; ?>
 
+        <?php if (isset($_GET['ok'])): ?>
+
+            <div class="alerta exito">
+                <?= htmlspecialchars($_GET['ok']) ?>
+            </div>
+
+        <?php endif; ?>
+
 
         <form
             action="../acciones/guardar.reserva.php"
@@ -76,7 +86,8 @@ require_once "../includes/header.php";
                 <input
                     type="tel"
                     name="telefono"
-                    placeholder="Ej: 3001234567"
+                    placeholder="Ej: 300 123 4567"
+                    inputmode="tel"
                     required>
             </div>
 
@@ -100,6 +111,7 @@ require_once "../includes/header.php";
 
                 <select
                     name="id_servicio"
+                    id="servicio"
                     required>
 
                     <option value="">
@@ -151,28 +163,32 @@ require_once "../includes/header.php";
                 </label>
 
                 <select
-                    name="manicurista"
+                    name="id_manicurista"
+                    id="manicurista"
                     required>
 
                     <option value="">
                         Selecciona una manicurista
                     </option>
 
-                    <option value="Marangeles Perez">
-                        Marangeles Perez
-                    </option>
+                    <?php
 
-                    <option value="Victoria Lemos">
-                        Victoria Lemos
-                    </option>
+                    $manicuristas = $conexion->query("
+                        SELECT id_manicurista, nombre
+                        FROM manicuristas
+                        WHERE activa = 1
+                        ORDER BY nombre
+                    ");
 
-                    <option value="Jennifer Atencia">
-                        Jennifer Atencia
-                    </option>
+                    while ($m = $manicuristas->fetch_assoc()):
 
-                    <option value="Valeria Albaran">
-                        Valeria Albaran
-                    </option>
+                    ?>
+
+                        <option value="<?= $m['id_manicurista'] ?>">
+                            <?= htmlspecialchars($m['nombre']) ?>
+                        </option>
+
+                    <?php endwhile; ?>
 
                 </select>
 
@@ -193,56 +209,24 @@ require_once "../includes/header.php";
             </div>
 
 
-            <div class="campo-reserva">
-                <label>
-                    Hora
-                </label>
-                <select
-                    name="hora"
-                    id="hora"
-                    required>
-                    <option value="">
-                        Selecciona una hora
-                    </option>
+            <!-- HORAS COMO BOTONES
+                 El JavaScript pide las horas libres de ese día (acciones/horas_disponibles.php)
+                 y las muestra como botones. Al tocar una, se guarda en el campo oculto «hora». -->
+            <div class="campo-reserva campo-horas">
 
-                    <option value="09:00:00">
-                        09:00 AM
-                    </option>
+                <label>Hora</label>
 
-                    <option value="10:00:00">
-                        10:00 AM
-                    </option>
+                <input type="hidden" name="hora" id="hora">
 
-                    <option value="11:00:00">
-                        11:00 AM
-                    </option>
+                <div
+                    class="horas-botones"
+                    id="horas"
+                    data-api="../acciones/horas_disponibles.php"
+                    data-modo="web"
+                >
+                    <p class="nota">Escoge el servicio, la manicurista y la fecha para ver las horas libres.</p>
+                </div>
 
-                    <option
-                        value="12:00:00"
-                        disabled>
-                        12:00 PM — DESCANSO (12:00 PM - 1:00 PM)
-                    </option>
-
-                    <option value="13:00:00">
-                        01:00 PM
-                    </option>
-
-                    <option value="14:00:00">
-                        02:00 PM
-                    </option>
-
-                    <option value="15:00:00">
-                        03:00 PM
-                    </option>
-
-                    <option value="16:00:00">
-                        04:00 PM
-                    </option>
-
-                    <option value="17:00:00">
-                        05:00 PM
-                    </option>
-                </select>
             </div>
 
 
@@ -296,6 +280,12 @@ require_once "../includes/header.php";
             <div>
                 <span>✓</span>
                 Ambiente relajante
+            </div>
+
+            <div class="promo-fidelidad">
+                <span>🎁</span>
+                <strong>Tu cita número 10 es GRATIS.</strong>
+                Te reconocemos por tu celular: reserva siempre con el mismo.
             </div>
 
         </div>

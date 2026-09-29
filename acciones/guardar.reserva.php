@@ -1,6 +1,20 @@
 <?php
 
 require_once "../conexion/conexion.php";
+require_once "../includes/agenda.php";
+require_once "../includes/fidelidad.php";
+
+
+// Devuelve al formulario con un mensaje y no sigue.
+function volver($mensaje)
+{
+    header(
+        "Location: ../paginas/reservar.php?error=" .
+        urlencode($mensaje)
+    );
+
+    exit;
+}
 
 
 // ==========================================
@@ -8,7 +22,9 @@ require_once "../conexion/conexion.php";
 // ==========================================
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+
     header("Location: ../paginas/reservar.php");
+
     exit;
 }
 
@@ -18,295 +34,158 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // ==========================================
 
 $nombre = trim($_POST['nombre'] ?? '');
+
 $telefono = trim($_POST['telefono'] ?? '');
+
 $correo = trim($_POST['correo'] ?? '');
+
 $id_servicio = intval($_POST['id_servicio'] ?? 0);
+
+$id_manicurista = intval($_POST['id_manicurista'] ?? 0);
+
 $fecha = $_POST['fecha'] ?? '';
+
 $hora = $_POST['hora'] ?? '';
-$manicurista = trim($_POST['manicurista'] ?? '');
+
 
 // ==========================================
-// VALIDAR DATOS
+// CAMPOS OBLIGATORIOS
 // ==========================================
 
 if (
     $nombre === '' ||
     $telefono === '' ||
     $id_servicio <= 0 ||
+    $id_manicurista <= 0 ||
     $fecha === '' ||
-    $hora === '' ||
-    $manicurista === ''
+    $hora === ''
 ) {
-    header(
-        "Location: ../paginas/reservar.php?error=" .
-        urlencode("Completa todos los campos obligatorios.")
-    );
-    exit;
+    volver("Completa todos los campos obligatorios.");
+}
+
+// El celular se guarda siempre igual (10 dígitos): con él se reconoce
+// a la clienta y se le cuentan las citas para la tarjeta de fidelidad.
+$telefono = normalizar_telefono($telefono);
+
+if ($telefono === '') {
+    volver("Escribe tu celular de 10 dígitos (ej. 300 123 4567).");
 }
 
 
 // ==========================================
-// VALIDAR FECHA Y HORA
+// ¿SE PUEDE TOMAR ESA CITA?
+// El servidor vuelve a revisar TODO, aunque el formulario
+// ya haya deshabilitado las horas ocupadas: el JavaScript
+// se puede apagar o cambiar con F12.
+// La regla completa está en includes/agenda.php.
 // ==========================================
 
-$fechaActual = date('Y-m-d');
-$horaActual = date('H:i:s');
+// Transacción: mientras se revisa y se guarda, la fila de la
+// manicurista queda "bloqueada" (FOR UPDATE). Si dos clientas
+// confirman la misma hora con la misma manicurista al mismo tiempo,
+// la segunda espera a que la primera termine, y al revisar ya ve
+// la cita nueva. Sin esto, las dos podrían pasar la revisión.
+$conexion->begin_transaction();
 
-if ($fecha < $fechaActual) {
+$bloqueo = $conexion->prepare("
+    SELECT id_manicurista
+    FROM manicuristas
+    WHERE id_manicurista = ?
+    FOR UPDATE
+");
+$bloqueo->bind_param("i", $id_manicurista);
+$bloqueo->execute();
+$bloqueo->get_result();
 
-    header(
-        "Location: ../paginas/reservar.php?error=" .
-        urlencode("No puedes reservar una fecha pasada.")
-    );
+$motivo = revisar_cita($conexion, $fecha, $hora, $id_servicio, $id_manicurista);
 
-    exit;
+if ($motivo !== "") {
+    $conexion->rollback();
+    volver($motivo);
 }
 
+$inicio = strtotime("$fecha $hora");
 
-// ==========================================
-// NO PERMITIR HORAS PASADAS HOY
-// ==========================================
+$fecha_limpia = date('Y-m-d', $inicio);
 
-if (
-    $fecha === $fechaActual &&
-    $hora <= $horaActual
-) {
-
-    header(
-        "Location: ../paginas/reservar.php?error=" .
-        urlencode("Esa hora ya pasó. Selecciona otra hora.")
-    );
-
-    exit;
-}
+$hora_limpia = date('H:i:s', $inicio);
 
 
 // ==========================================
-// DESCANSO DE 12:00 PM A 1:00 PM
+// BUSCAR O CREAR LA CLIENTA POR SU CELULAR
+// y revisar su tarjeta de fidelidad: si tiene una cita gratis
+// ganada, ESTA cita sale gratis.
 // ==========================================
 
-if ($hora === '12:00:00') {
+$id_cliente = buscar_o_crear_cliente($conexion, $telefono, $nombre, $correo);
 
-    header(
-        "Location: ../paginas/reservar.php?error=" .
-        urlencode("De 12:00 PM a 1:00 PM es horario de descanso.")
-    );
+$tarjeta = tarjeta_cliente($conexion, $id_cliente, true);
 
-    exit;
-}
+$gratis = $tarjeta['disponibles'] > 0 ? 1 : 0;
 
 
 // ==========================================
-// COMPROBAR QUE EL SERVICIO EXISTE
+// GUARDAR LA RESERVA
+// Se copian el precio y la duración que tiene HOY el servicio:
+// si mañana el salón los cambia, esta cita queda como se reservó.
 // ==========================================
 
 $stmt = $conexion->prepare("
-    SELECT id_servicio
+    SELECT precio, duracion
     FROM servicios
     WHERE id_servicio = ?
-    AND activo = 1
 ");
-
-if (!$stmt) {
-    die("Error SQL al buscar el servicio: " . $conexion->error);
-}
-
 $stmt->bind_param("i", $id_servicio);
 $stmt->execute();
-
-$resultado = $stmt->get_result();
-
-if ($resultado->num_rows === 0) {
-    die("El servicio seleccionado no existe o está inactivo.");
-}
-
-$stmt->close();
-
-
-// ==========================================
-// COMPROBAR HORARIO DISPONIBLE
-// ==========================================
-
-$stmt = $conexion->prepare("
-    SELECT id_reserva
-    FROM reservas
-    WHERE fecha = ?
-    AND hora = ?
-    AND manicurista = ?
-    AND estado != 'Cancelada'
-");
-
-if (!$stmt) {
-    die("Error SQL al comprobar el horario: " . $conexion->error);
-}
-
-$stmt->bind_param(
-    "sss",
-    $fecha,
-    $hora,
-    $manicurista
-);
-
-$stmt->execute();
-
-$resultado = $stmt->get_result();
-
-if ($resultado->num_rows > 0) {
-    header(
-        "Location: ../paginas/reservar.php?error=" .
-        urlencode("Ese horario ya está ocupado.")
-    );
-    exit;
-}
-
-$stmt->close();
-
-
-// ==========================================
-// BUSCAR CLIENTE POR TELÉFONO
-// ==========================================
-
-$stmt = $conexion->prepare("
-    SELECT id_cliente
-    FROM clientes
-    WHERE telefono = ?
-");
-
-if (!$stmt) {
-    die("Error SQL al buscar el cliente: " . $conexion->error);
-}
-
-$stmt->bind_param("s", $telefono);
-$stmt->execute();
-
-$resultado = $stmt->get_result();
-
-
-// ==========================================
-// CLIENTE EXISTENTE
-// ==========================================
-
-if ($resultado->num_rows > 0) {
-
-    $cliente = $resultado->fetch_assoc();
-
-    $id_cliente = intval($cliente['id_cliente']);
-
-    $stmt->close();
-
-
-    // Actualizar datos del cliente
-
-    $actualizar = $conexion->prepare("
-        UPDATE clientes
-        SET nombre = ?, correo = ?
-        WHERE id_cliente = ?
-    ");
-
-    if (!$actualizar) {
-        die("Error SQL al actualizar cliente: " . $conexion->error);
-    }
-
-    $actualizar->bind_param(
-        "ssi",
-        $nombre,
-        $correo,
-        $id_cliente
-    );
-
-    if (!$actualizar->execute()) {
-        die(
-            "Error al actualizar el cliente: " .
-            $actualizar->error
-        );
-    }
-
-    $actualizar->close();
-
-
-// ==========================================
-// CLIENTE NUEVO
-// ==========================================
-
-} else {
-
-    $stmt->close();
-
-    $insertar = $conexion->prepare("
-        INSERT INTO clientes
-        (nombre, telefono, correo)
-        VALUES (?, ?, ?)
-    ");
-
-    if (!$insertar) {
-        die("Error SQL al crear cliente: " . $conexion->error);
-    }
-
-    $insertar->bind_param(
-        "sss",
-        $nombre,
-        $telefono,
-        $correo
-    );
-
-    if (!$insertar->execute()) {
-        die(
-            "Error al crear el cliente: " .
-            $insertar->error
-        );
-    }
-
-    $id_cliente = $conexion->insert_id;
-
-    $insertar->close();
-}
-
-
-// ==========================================
-// GUARDAR RESERVA
-// ==========================================
+$servicio = $stmt->get_result()->fetch_assoc();
 
 $insertar_reserva = $conexion->prepare("
     INSERT INTO reservas
-    (id_cliente, id_servicio, fecha, hora, estado, manicurista)
-    VALUES (?, ?, ?, ?, 'Pendiente', ?)
+    (id_cliente, id_servicio, id_manicurista, fecha, hora, precio, duracion, gratis, estado)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pendiente')
 ");
 
-if (!$insertar_reserva) {
-    die(
-        "ERROR AL PREPARAR LA RESERVA: " .
-        $conexion->error
-    );
-}
-
 $insertar_reserva->bind_param(
-    "iisss",
+    "iiissdii",
     $id_cliente,
     $id_servicio,
-    $fecha,
-    $hora,
-    $manicurista
+    $id_manicurista,
+    $fecha_limpia,
+    $hora_limpia,
+    $servicio['precio'],
+    $servicio['duracion'],
+    $gratis
 );
 
-if (!$insertar_reserva->execute()) {
-    die(
-        "ERROR AL GUARDAR LA RESERVA: " .
-        $insertar_reserva->error
-    );
+$insertar_reserva->execute();
+
+$conexion->commit();
+
+
+// ==========================================
+// TODO CORRECTO: la clienta vuelve al formulario
+// con su confirmación (la agenda es solo del personal).
+// ==========================================
+
+$mensaje = "¡Listo! Tu cita quedó reservada para el " .
+    date('d/m/Y', $inicio) . " a las " . date('h:i A', $inicio) . ". ";
+
+if ($gratis) {
+
+    $mensaje .= "🎁 ¡Esta cita es GRATIS! Es tu cita número " . (CITAS_PARA_GRATIS + 1) . ". Gracias por preferirnos.";
+
+} else {
+
+    // Cuántas le faltan (la cita que acaba de reservar cuenta cuando se complete).
+    $faltan = CITAS_PARA_GRATIS - $tarjeta['sellos'] - 1;
+
+    $mensaje .= $faltan <= 0
+        ? "Cuando te atiendan, tu próxima cita será GRATIS."
+        : "Te " . ($faltan === 1 ? "falta 1 cita" : "faltan $faltan citas") . " más para tu cita gratis.";
 }
 
-$insertar_reserva->close();
-
-
-// ==========================================
-// TODO CORRECTO
-// ==========================================
-
 header(
-    "Location: ../paginas/agenda.php?mensaje=" .
-    urlencode("La reserva fue creada correctamente.")
+    "Location: ../paginas/reservar.php?ok=" . urlencode($mensaje)
 );
 
 exit;
-
-?>

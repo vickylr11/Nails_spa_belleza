@@ -11,7 +11,7 @@ $consulta = $conexion->query("
     SELECT COUNT(*) AS total
     FROM reservas
     WHERE fecha = CURDATE()
-    AND estado != 'Cancelada'
+    AND estado NOT IN ('Cancelada', 'No asistió')
 ");
 
 $datos = $consulta->fetch_assoc();
@@ -42,180 +42,87 @@ require_once "includes/header.php";
 ?>
 
 
+<!-- ================= PORTADA ================= -->
+
 <section class="hero">
-
-
-
- 
-
 
     <div class="hero-text">
 
-        <span class="etiqueta">
-            ✨ Bienvenida a tu espacio de belleza
-        </span>
+        <span class="etiqueta">✨ Bienvenida a tu espacio de belleza</span>
 
         <h1>
             Nails Spa<br>
             <span>Belleza</span>
         </h1>
 
-        <p>
-            Tus uñas, tu estilo.
-        </p>
+        <p class="lema">Tus uñas, tu estilo.</p>
 
         <p class="descripcion">
-
             Reserva tu cita de manera rápida y sencilla.
-            Elige el servicio, la fecha y el horario que
-            más te convenga.
-
+            Elige el servicio, la manicurista, la fecha y el horario que más te convenga.
         </p>
-
-       
-
-        
 
         <div class="hero-botones">
 
-            <a
-                href="paginas/reservar.php"
-                class="btn-principal"
-            >
+            <a href="paginas/reservar.php" class="btn-principal">
                 Reservar mi cita
             </a>
 
-            <a
-                href="#servicios"
-                class="btn-secundario"
-            >
+            <a href="#servicios" class="btn-secundario">
                 Ver servicios
             </a>
 
         </div>
 
-        
-
     </div>
-
-    <section class="hero">
-
-    </div>
-
-
-    <!-- LOGO EN EL LADO DERECHO DEL HERO -->
 
     <div class="logo-hero">
-
-        <img
-            src="/NAILS_SPA_BELLEZA/ft/img/foto1.png"
-            alt="Nails Spa Belleza"
-        >
-
+        <img src="assets/img/logo.png" alt="Nails Spa Belleza">
     </div>
 
-
 </section>
 
 
-  
-
-</section>
-
-
-<!-- ESTADÍSTICAS -->
+<!-- ================= ESTADÍSTICAS ================= -->
 
 <section class="estadisticas">
 
     <div class="estadistica">
-
-        <span class="estadistica-icono">
-            📅
-        </span>
-
+        <span class="estadistica-icono">📅</span>
         <div>
-
-            <strong>
-                <?= $citas_hoy ?>
-            </strong>
-
-            <span>
-                Citas hoy
-            </span>
-
+            <strong><?= $citas_hoy ?></strong>
+            <span>Citas hoy</span>
         </div>
-
     </div>
 
-
     <div class="estadistica">
-
-        <span class="estadistica-icono">
-            👩
-        </span>
-
+        <span class="estadistica-icono">💖</span>
         <div>
-
-            <strong>
-                <?= $total_clientes ?>
-            </strong>
-
-            <span>
-                Clientes
-            </span>
-
+            <strong><?= $total_clientes ?></strong>
+            <span>Clientes</span>
         </div>
-
     </div>
 
-
     <div class="estadistica">
-
-        <span class="estadistica-icono">
-            
-        </span>
-      
-
+        <span class="estadistica-icono">💅</span>
         <div>
-
-            <strong>
-                <?= $total_servicios ?>
-            </strong>
-
-            <span>
-                Servicios 
-            </span>
-
+            <strong><?= $total_servicios ?></strong>
+            <span>Servicios</span>
         </div>
-
     </div>
 
 </section>
 
 
-<!-- SERVICIOS -->
+<!-- ================= SERVICIOS ================= -->
 
-<section
-    id="servicios"
-    class="seccion"
->
+<section id="servicios" class="seccion">
 
     <div class="titulo-seccion">
-
-        <span>
-            NUESTROS SERVICIOS
-        </span>
-
-        <h2>
-            Mímate, te lo mereces
-        </h2>
-
-        <p>
-            Elige el tratamiento perfecto para ti.
-        </p>
-
+        <span>NUESTROS SERVICIOS</span>
+        <h2>Mímate, te lo mereces</h2>
+        <p>Elige el tratamiento perfecto para ti.</p>
     </div>
-
 
     <div class="servicios">
 
@@ -232,84 +139,51 @@ require_once "includes/header.php";
 
         ?>
 
-        <article class="card-servicio">
+            <article class="card-servicio">
 
-            <!-- IMAGEN DEL SERVICIO -->
-            <div 
-                class="servicio-icono"
-                style="
-                    width: 100%;
-                    height: 180px;
-                    overflow: hidden;
-                    border-radius: 15px;
-                "
-            >
+                <div class="servicio-foto">
 
-                <?php
+                    <?php if ($servicio['imagen']): ?>
 
-                $imagenes = [
-                    1 => "foto4.png",
-                    2 => "foto3.png",
-                    3 => "foto5.png",
-                    4 => "foto6.png"
-                ];
+                        <img
+                            src="<?= htmlspecialchars($servicio['imagen']) ?>"
+                            alt="<?= htmlspecialchars($servicio['nombre']) ?>"
+                        >
 
-                $id = $servicio['id_servicio'];
+                    <?php else: ?>
 
-                if (isset($imagenes[$id])):
+                        <!-- Servicio sin foto: se muestra el logo -->
+                        <img
+                            src="assets/img/logo.png"
+                            alt="Nails Spa Belleza"
+                            class="sin-foto"
+                        >
 
-                ?>
+                    <?php endif; ?>
 
-                    <img
-                        src="/NAILS_SPA_BELLEZA/ft/img/<?= $imagenes[$id] ?>"
-                        alt="<?= htmlspecialchars($servicio['nombre']) ?>"
-                        style="
-                            width: 100%;
-                            height: 100%;
-                            object-fit: cover;
-                            display: block;
-                        "
+                </div>
+
+                <div class="servicio-cuerpo">
+
+                    <h3><?= htmlspecialchars($servicio['nombre']) ?></h3>
+
+                    <p><?= htmlspecialchars($servicio['descripcion']) ?></p>
+
+                    <div class="servicio-info">
+                        <strong>$<?= number_format($servicio['precio'], 0, ',', '.') ?></strong>
+                        <span>⏱ <?= $servicio['duracion'] ?> min</span>
+                    </div>
+
+                    <a
+                        href="paginas/reservar.php?servicio=<?= $servicio['id_servicio'] ?>"
+                        class="btn-card"
                     >
+                        Reservar
+                    </a>
 
-                <?php endif; ?>
+                </div>
 
-            </div>
-            
-
-            <h3>
-                <?= htmlspecialchars($servicio['nombre']) ?>
-            </h3>
-
-            <p>
-                <?= htmlspecialchars($servicio['descripcion']) ?>
-            </p>
-
-            <div class="servicio-info">
-
-                <strong>
-                    $<?= number_format(
-                        $servicio['precio'],
-                        0,
-                        ',',
-                        '.'
-                    ) ?>
-                </strong>
-
-                <span>
-                    <?= $servicio['duracion'] ?> min
-                </span>
-
-            </div>
-
-            <a
-                href="paginas/reservar.php?servicio=<?= $servicio['id_servicio'] ?>"
-                class="btn-card"
-            >
-                Reservar
-            </a>
-
-        </article>
-        
+            </article>
 
         <?php endwhile; ?>
 
@@ -318,79 +192,57 @@ require_once "includes/header.php";
 </section>
 
 
-<!-- PASOS -->
+<!-- ================= TARJETA DE FIDELIDAD ================= -->
+
+<section class="promo">
+
+    <span class="promo-icono">🎁</span>
+
+    <div>
+        <h2>Tu cita número 10 es gratis</h2>
+        <p>Te reconocemos por tu celular. Cada cita suma un sello, en la página o en el salón.</p>
+    </div>
+
+    <a href="paginas/reservar.php" class="btn-blanco">Reservar ahora</a>
+
+</section>
+
+
+<!-- ================= PASOS ================= -->
 
 <section class="seccion pasos-seccion">
 
     <div class="titulo-seccion">
-
-        <span>
-            ¿CÓMO FUNCIONA?
-        </span>
-
-        <h2>
-            Reserva en 3 simples pasos
-        </h2>
-
+        <span>¿CÓMO FUNCIONA?</span>
+        <h2>Reserva en 3 simples pasos</h2>
     </div>
-
 
     <div class="pasos">
 
         <div class="paso">
-
-            <span>1</span>
-
-            <h3>
-                Escoge tu servicio
-            </h3>
-
-            <p>
-                Selecciona el tratamiento
-                que quieres realizarte.
-            </p>
-
+            <span class="paso-numero">1</span>
+            <h3>Escoge tu servicio</h3>
+            <p>Selecciona el tratamiento que quieres realizarte.</p>
         </div>
 
-
         <div class="paso">
-
-            <span>2</span>
-
-            <h3>
-                Elige fecha y hora
-            </h3>
-
-            <p>
-                Consulta los horarios
-                disponibles.
-            </p>
-
+            <span class="paso-numero">2</span>
+            <h3>Elige manicurista, fecha y hora</h3>
+            <p>Solo verás las horas que de verdad están libres.</p>
         </div>
 
-
         <div class="paso">
-
-            <span>3</span>
-
-            <h3>
-                Confirma tu cita
-            </h3>
-
-            <p>
-                Ingresa tus datos y
-                confirma la reserva.
-            </p>
-
+            <span class="paso-numero">3</span>
+            <h3>Confirma tu cita</h3>
+            <p>Te escribimos por WhatsApp para confirmarla.</p>
         </div>
 
     </div>
-      
 
 </section>
 
 <?php
- 
+
 require_once "includes/footer.php";
 
 ?>

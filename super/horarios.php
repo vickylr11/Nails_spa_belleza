@@ -1,6 +1,11 @@
 <?php
 
 require_once "../conexion/conexion.php";
+require_once "../includes/seguridad.php";
+
+exigir_admin();
+
+$base = "../";
 
 $titulo = "Horarios - Nails Spa Belleza";
 
@@ -44,9 +49,17 @@ require_once "../includes/header.php";
 
     <?php endif; ?>
 
+    <?php if (isset($_GET['error'])): ?>
+
+        <div class="alerta error">
+            <?= htmlspecialchars($_GET['error']) ?>
+        </div>
+
+    <?php endif; ?>
+
 
     <form
-        action="../acciones/guardar_horarios.php"
+        action="guardar_horarios.php"
         method="POST"
     >
 
