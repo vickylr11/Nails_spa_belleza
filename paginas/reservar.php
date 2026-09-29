@@ -1,4 +1,52 @@
 <?php
+session_start();
+
+require_once "../conexion/conexion.php";
+
+$titulo = "Reservar cita - Nails Spa Belleza";
+
+$servicio_seleccionado = isset($_GET['servicio'])
+    ? intval($_GET['servicio'])
+    : 0;
+
+/* Manicurista seleccionada en la página anterior */
+$id_manicurista = $_SESSION['id_manicurista'] ?? 0;
+
+$manicurista_seleccionada = null;
+
+if ($id_manicurista > 0) {
+    $stmt = $conexion->prepare("
+        SELECT id_manicurista, nombre
+        FROM manicuristas
+        WHERE id_manicurista = ? AND estado = 1
+    ");
+
+    $stmt->bind_param("i", $id_manicurista);
+    $stmt->execute();
+
+    $manicurista_seleccionada = $stmt->get_result()->fetch_assoc();
+}
+
+/* Horarios de atención configurados por administración */
+$horarios_resultado = $conexion->query("
+    SELECT dia, hora_apertura, hora_cierre, disponible
+    FROM horarios
+");
+
+$horarios_semana = [];
+
+while ($fila = $horarios_resultado->fetch_assoc()) {
+    $horarios_semana[$fila['dia']] = [
+        'apertura' => $fila['hora_apertura'],
+        'cierre' => $fila['hora_cierre'],
+        'disponible' => (int)$fila['disponible']
+    ];
+}
+
+require_once "../includes/header.php";
+?>
+
+<?php
 
 require_once "../conexion/conexion.php";
 
@@ -150,39 +198,40 @@ require_once "../includes/header.php";
                     Manicurista
                 </label>
 
-                <select
-                    name="manicurista"
-                    required>
+                <div class="campo-reserva">
+                    <label>Manicurista</label>
 
-                    <option value="">
-                        Selecciona una manicurista
-                    </option>
+                    <?php if ($manicurista_seleccionada): ?>
 
-                    <option value="Marangeles Perez">
-                        Marangeles Perez
-                    </option>
+                        <input
+                            type="text"
+                            value="<?= htmlspecialchars($manicurista_seleccionada['nombre']) ?>"
+                            readonly>
 
-                    <option value="Victoria Lemos">
-                        Victoria Lemos
-                    </option>
+                        <input
+                            type="hidden"
+                            name="manicurista"
+                            value="<?= htmlspecialchars($manicurista_seleccionada['nombre']) ?>">
 
-                    <option value="Jennifer Atencia">
-                        Jennifer Atencia
-                    </option>
+                        <input
+                            type="hidden"
+                            name="id_manicurista"
+                            value="<?= (int)$manicurista_seleccionada['id_manicurista'] ?>">
 
-                    <option value="Valeria Albaran">
-                        Valeria Albaran
-                    </option>
+                    <?php else: ?>
 
-                </select>
+                        <p>Primero selecciona una manicurista.</p>
+
+                        <a href="manicurista.php">Ver manicuristas</a>
+
+                    <?php endif; ?>
+                </div>
 
             </div>
 
 
             <div class="campo-reserva">
-                <label>
-                    Fecha
-                </label>
+                <label>Fecha de la cita</label>
 
                 <input
                     type="date"
@@ -194,57 +243,16 @@ require_once "../includes/header.php";
 
 
             <div class="campo-reserva">
-                <label>
-                    Hora
-                </label>
-                <select
-                    name="hora"
-                    id="hora"
-                    required>
-                    <option value="">
-                        Selecciona una hora
-                    </option>
+                <label>Hora disponible</label>
 
-                    <option value="09:00:00">
-                        09:00 AM
-                    </option>
-
-                    <option value="10:00:00">
-                        10:00 AM
-                    </option>
-
-                    <option value="11:00:00">
-                        11:00 AM
-                    </option>
-
-                    <option
-                        value="12:00:00"
-                        disabled>
-                        12:00 PM — DESCANSO (12:00 PM - 1:00 PM)
-                    </option>
-
-                    <option value="13:00:00">
-                        01:00 PM
-                    </option>
-
-                    <option value="14:00:00">
-                        02:00 PM
-                    </option>
-
-                    <option value="15:00:00">
-                        03:00 PM
-                    </option>
-
-                    <option value="16:00:00">
-                        04:00 PM
-                    </option>
-
-                    <option value="17:00:00">
-                        05:00 PM
-                    </option>
+                <select name="hora" id="hora" required disabled>
+                    <option value="">Primero selecciona una fecha</option>
                 </select>
-            </div>
 
+                <small id="mensaje-horario">
+                    Selecciona un día para consultar los horarios disponibles.
+                </small>
+            </div>
 
             <div class="campo-boton">
 
@@ -303,6 +311,125 @@ require_once "../includes/header.php";
     </div>
 
 </section>
+
+<script>
+const horariosSemana = <?= json_encode(
+    $horarios_semana,
+    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+) ?>;
+
+const fechaInput = document.getElementById("fecha");
+const horaSelect = document.getElementById("hora");
+const mensajeHorario = document.getElementById("mensaje-horario");
+
+const nombresDias = [
+    "Domingo",
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado"
+];
+
+function actualizarHoras() {
+    const fechaSeleccionada = fechaInput.value;
+
+    horaSelect.innerHTML = "";
+    horaSelect.disabled = true;
+
+    if (!fechaSeleccionada) {
+        horaSelect.innerHTML =
+            '<option value="">Primero selecciona una fecha</option>';
+        return;
+    }
+
+    const [anio, mes, dia] = fechaSeleccionada.split("-").map(Number);
+    const fecha = new Date(anio, mes - 1, dia);
+
+    const nombreDia = nombresDias[fecha.getDay()];
+    const horario = horariosSemana[nombreDia];
+
+    if (!horario || horario.disponible !== 1) {
+        horaSelect.innerHTML =
+            '<option value="">No hay atención este día</option>';
+        mensajeHorario.textContent = "Selecciona otro día.";
+        return;
+    }
+
+    const ahora = new Date();
+
+    const esHoy =
+        anio === ahora.getFullYear() &&
+        mes === ahora.getMonth() + 1 &&
+        dia === ahora.getDate();
+
+    const [horaApertura, minutoApertura] =
+        horario.apertura.split(":").map(Number);
+
+    const [horaCierre, minutoCierre] =
+        horario.cierre.split(":").map(Number);
+
+    let inicio = horaApertura * 60 + minutoApertura;
+    const cierre = horaCierre * 60 + minutoCierre;
+
+    if (esHoy) {
+        const minutosActuales =
+            ahora.getHours() * 60 + ahora.getMinutes();
+
+        if (minutosActuales > inicio) {
+            inicio = Math.ceil(minutosActuales / 60) * 60;
+        }
+    }
+
+    let cantidad = 0;
+
+    for (let minutos = inicio; minutos + 60 <= cierre; minutos += 60) {
+        const hora = Math.floor(minutos / 60);
+        const minuto = minutos % 60;
+
+        // Descanso de 12:00 p. m. a 1:00 p. m.
+        if (minutos >= 720 && minutos < 780) {
+            continue;
+        }
+
+        const valor =
+            String(hora).padStart(2, "0") + ":" +
+            String(minuto).padStart(2, "0") + ":00";
+
+        const hora12 = hora % 12 || 12;
+        const periodo = hora < 12 ? "AM" : "PM";
+
+        const texto =
+            String(hora12).padStart(2, "0") + ":" +
+            String(minuto).padStart(2, "0") + " " + periodo;
+
+        const opcion = document.createElement("option");
+        opcion.value = valor;
+        opcion.textContent = texto;
+
+        horaSelect.appendChild(opcion);
+        cantidad++;
+    }
+
+    if (cantidad === 0) {
+        horaSelect.innerHTML =
+            '<option value="">No quedan horarios disponibles</option>';
+        mensajeHorario.textContent = "Elige otra fecha.";
+    } else {
+        horaSelect.disabled = false;
+        horaSelect.insertAdjacentHTML(
+            "afterbegin",
+            '<option value="">Selecciona una hora</option>'
+        );
+
+        mensajeHorario.textContent =
+            "Horarios según la jornada de atención.";
+    }
+}
+
+fechaInput.addEventListener("change", actualizarHoras);
+</script>
 
 <?php
 

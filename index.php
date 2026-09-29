@@ -1,5 +1,5 @@
 <?php
-  
+
 
 require_once "conexion/conexion.php";
 
@@ -46,7 +46,7 @@ require_once "includes/header.php";
 
 
 
- 
+
 
 
     <div class="hero-text">
@@ -72,53 +72,50 @@ require_once "includes/header.php";
 
         </p>
 
-       
 
-        
+
+
 
         <div class="hero-botones">
 
-            <a
-                href="paginas/reservar.php"
-                class="btn-principal"
-            >
-                Reservar mi cita
-            </a>
+           
 
             <a
                 href="#servicios"
-                class="btn-secundario"
-            >
+                class="btn-secundario">
                 Ver servicios
+            </a>
+
+            <a href="paginas/manicurista.php" class="btn-reserva">
+                Conoce a nuestras manicuristas
             </a>
 
         </div>
 
-        
+
 
     </div>
 
     <section class="hero">
 
-    </div>
+        </div>
 
 
-    <!-- LOGO EN EL LADO DERECHO DEL HERO -->
+        <!-- LOGO EN EL LADO DERECHO DEL HERO -->
 
-    <div class="logo-hero">
+        <div class="logo-hero">
 
-        <img
-            src="/NAILS_SPA_BELLEZA/ft/img/foto1.png"
-            alt="Nails Spa Belleza"
-        >
+            <img
+                src="/NAILS_SPA_BELLEZA/ft/img/foto1.png"
+                alt="Nails Spa Belleza">
 
-    </div>
-
-
-</section>
+        </div>
 
 
-  
+    </section>
+
+
+
 
 </section>
 
@@ -172,9 +169,9 @@ require_once "includes/header.php";
     <div class="estadistica">
 
         <span class="estadistica-icono">
-            
+
         </span>
-      
+
 
         <div>
 
@@ -183,7 +180,7 @@ require_once "includes/header.php";
             </strong>
 
             <span>
-                Servicios 
+                Servicios
             </span>
 
         </div>
@@ -197,8 +194,7 @@ require_once "includes/header.php";
 
 <section
     id="servicios"
-    class="seccion"
->
+    class="seccion">
 
     <div class="titulo-seccion">
 
@@ -232,84 +228,81 @@ require_once "includes/header.php";
 
         ?>
 
-        <article class="card-servicio">
+            <article class="card-servicio">
 
-            <!-- IMAGEN DEL SERVICIO -->
-            <div 
-                class="servicio-icono"
-                style="
+                <!-- IMAGEN DEL SERVICIO -->
+                <div
+                    class="servicio-icono"
+                    style="
                     width: 100%;
                     height: 180px;
                     overflow: hidden;
                     border-radius: 15px;
-                "
-            >
+                ">
 
-                <?php
+                    <?php
 
-                $imagenes = [
-                    1 => "foto4.png",
-                    2 => "foto3.png",
-                    3 => "foto5.png",
-                    4 => "foto6.png"
-                ];
+                    $imagenes = [
+                        1 => "foto4.png",
+                        2 => "foto3.png",
+                        3 => "foto5.png",
+                        4 => "foto6.png"
+                    ];
 
-                $id = $servicio['id_servicio'];
+                    $id = $servicio['id_servicio'];
 
-                if (isset($imagenes[$id])):
+                    if (isset($imagenes[$id])):
 
-                ?>
+                    ?>
 
-                    <img
-                        src="/NAILS_SPA_BELLEZA/ft/img/<?= $imagenes[$id] ?>"
-                        alt="<?= htmlspecialchars($servicio['nombre']) ?>"
-                        style="
+                        <img
+                            src="/NAILS_SPA_BELLEZA/ft/img/<?= $imagenes[$id] ?>"
+                            alt="<?= htmlspecialchars($servicio['nombre']) ?>"
+                            style="
                             width: 100%;
                             height: 100%;
                             object-fit: cover;
                             display: block;
-                        "
-                    >
+                        ">
 
-                <?php endif; ?>
+                    <?php endif; ?>
 
-            </div>
-            
+                </div>
 
-            <h3>
-                <?= htmlspecialchars($servicio['nombre']) ?>
-            </h3>
 
-            <p>
-                <?= htmlspecialchars($servicio['descripcion']) ?>
-            </p>
+                <h3>
+                    <?= htmlspecialchars($servicio['nombre']) ?>
+                </h3>
 
-            <div class="servicio-info">
+                <p>
+                    <?= htmlspecialchars($servicio['descripcion']) ?>
+                </p>
 
-                <strong>
-                    $<?= number_format(
-                        $servicio['precio'],
-                        0,
-                        ',',
-                        '.'
-                    ) ?>
-                </strong>
+                <div class="servicio-info">
 
-                <span>
-                    <?= $servicio['duracion'] ?> min
-                </span>
+                    <strong>
+                        $<?= number_format(
+                                $servicio['precio'],
+                                0,
+                                ',',
+                                '.'
+                            ) ?>
+                    </strong>
 
-            </div>
+                    <span>
+                        <?= $servicio['duracion'] ?> min
+                    </span>
 
-            <a
-                href="paginas/reservar.php?servicio=<?= $servicio['id_servicio'] ?>"
-                class="btn-card"
-            >
-                Reservar
-            </a>
+                </div>
 
-        </article>
-        
+                <a
+                    href="paginas/reservar.php?servicio=<?= $servicio['id_servicio'] ?>"
+                    class="btn-card">
+                    Reservar
+                </a>
+
+            </article>
+
 
         <?php endwhile; ?>
 
@@ -385,12 +378,12 @@ require_once "includes/header.php";
         </div>
 
     </div>
-      
+
 
 </section>
 
 <?php
- 
+
 require_once "includes/footer.php";
 
 ?>

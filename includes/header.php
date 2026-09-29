@@ -81,12 +81,7 @@ if (!isset($titulo)) {
 }
 </style>
 
-    <a
-        href="/NAILS_SPA_BELLEZA/paginas/reservar.php"
-        class="btn-reserva"
-    >
-        + Nueva cita
-    </a>
+    
 
 </header>
 

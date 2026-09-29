@@ -1,0 +1,60 @@
+/* Tarjetas de manicuristas */
+.contenedor-manicuristas .grid-manicuristas {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, 240px) !important;
+    justify-content: center !important;
+    align-items: start !important;
+    gap: 24px !important;
+    width: 100% !important;
+    max-width: 1100px !important;
+    margin: 25px auto !important;
+}
+
+.contenedor-manicuristas .form-manicurista {
+    width: 240px !important;
+    margin: 0 !important;
+}
+
+.contenedor-manicuristas .tarjeta-manicurista {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 240px !important;
+    max-width: 240px !important;
+    padding: 0 0 18px !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    border: 1px solid #f2cadd !important;
+    border-radius: 15px !important;
+    background: white !important;
+}
+
+.contenedor-manicuristas .tarjeta-manicurista img.foto-manicurista {
+    display: block !important;
+    width: 238px !important;
+    height: 190px !important;
+    min-height: 190px !important;
+    max-height: 190px !important;
+    object-fit: cover !important;
+    flex: none !important;
+}
+
+.contenedor-manicuristas .tarjeta-manicurista h3 {
+    margin: 14px 0 !important;
+    text-align: center;
+}
+
+.contenedor-manicuristas .boton-seleccionar {
+    display: inline-block;
+    padding: 10px 16px;
+    border-radius: 25px;
+    background: #b3135b;
+    color: white;
+    font-weight: bold;
+}
+
+@media (max-width: 550px) {
+    .contenedor-manicuristas .grid-manicuristas {
+        grid-template-columns: 240px !important;
+    }
+}
