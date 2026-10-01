@@ -42,7 +42,11 @@ $servicios = $conexion->query("
         (SELECT COUNT(*) FROM reservas r
          WHERE r.id_servicio = s.id_servicio
          AND r.fecha >= CURDATE()
-         AND r.estado IN ('Pendiente', 'Confirmada')) AS citas_proximas
+         AND r.estado IN ('Pendiente', 'Confirmada')) AS citas_proximas,
+        (SELECT GROUP_CONCAT(m.nombre ORDER BY m.nombre SEPARATOR ', ')
+         FROM manicurista_servicio ms
+         JOIN manicuristas m ON m.id_manicurista = ms.id_manicurista AND m.activa = 1
+         WHERE ms.id_servicio = s.id_servicio) AS quien_lo_hace
     FROM servicios s
     ORDER BY s.activo DESC, s.nombre ASC
 ")->fetch_all(MYSQLI_ASSOC);
@@ -147,6 +151,11 @@ require_once "../includes/header.php";
 
                 <?php if ($editar): ?>
                     <p class="nota">Si no escoges una foto nueva, se conserva la actual.</p>
+                <?php else: ?>
+                    <p class="nota">
+                        Al crearlo, queda asignado a todas las manicuristas activas.
+                        A la que no lo haga, se le quita en <a href="manicuristas.php">Manicuristas</a> > Editar.
+                    </p>
                 <?php endif; ?>
 
                 <button type="submit" class="btn-principal btn-completo">
@@ -195,6 +204,12 @@ require_once "../includes/header.php";
 
                         <td>
                             <strong><?= htmlspecialchars($s['nombre']) ?></strong>
+
+                            <br><small>
+                                <?= $s['quien_lo_hace']
+                                    ? 'Lo hacen: ' . htmlspecialchars($s['quien_lo_hace'])
+                                    : '⚠ Ninguna manicurista lo hace: no se puede reservar' ?>
+                            </small>
 
                             <?php if ($s['citas_proximas'] > 0): ?>
                                 <br><small><?= $s['citas_proximas'] ?> citas próximas</small>

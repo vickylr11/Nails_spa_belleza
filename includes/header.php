@@ -102,6 +102,10 @@ if (!isset($base)) {
             <?= $_SESSION['usuario_rol'] === 'administrador' ? 'Agenda' : 'Mi agenda' ?>
         </a>
 
+        <a href="<?= $base ?>super/bloqueos.php">
+            <?= $_SESSION['usuario_rol'] === 'administrador' ? 'Bloqueos' : 'Mis bloqueos' ?>
+        </a>
+
         <?php if ($_SESSION['usuario_rol'] === 'administrador'): ?>
 
             <a href="<?= $base ?>super/cita_nueva.php">Cita en el salón</a>

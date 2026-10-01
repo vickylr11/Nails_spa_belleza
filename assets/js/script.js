@@ -158,33 +158,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     // ==========================================
-    // FECHA MÍNIMA (solo en la página pública: la clienta no reserva en el pasado.
-    // En «Cita en el salón» sí se puede escoger un día pasado para un servicio ya hecho.)
-    // ==========================================
-
-    if (fecha && document.getElementById("formReserva")) {
-
-        const hoy = new Date();
-
-        const año = hoy.getFullYear();
-
-        const mes = String(
-            hoy.getMonth() + 1
-        ).padStart(2, "0");
-
-        const dia = String(
-            hoy.getDate()
-        ).padStart(2, "0");
-
-        const fechaActual =
-            `${año}-${mes}-${dia}`;
-
-        fecha.min = fechaActual;
-    }
-
-
-
-    // ==========================================
     // HORAS COMO BOTONES
     // Le pide al servidor las horas de ese día (acciones/horas_disponibles.php)
     // y pinta un botón por cada una. Las libres se pueden tocar; las que no,
@@ -214,6 +187,12 @@ document.addEventListener("DOMContentLoaded", function () {
         p.className = "nota";
         p.textContent = texto;
         cajaHoras.appendChild(p);
+        avisarCambioHoras();
+    }
+
+    // Avisa que las horas se volvieron a pintar (el resumen de la reserva lo escucha).
+    function avisarCambioHoras() {
+        cajaHoras.dispatchEvent(new Event("horas-cambiaron"));
     }
 
     function cargarHoras(avisarSiSePerdio) {
@@ -224,7 +203,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (fecha.value === "" || servicio.value === "" || manicurista.value === "") {
             hora.value = "";
-            aviso("Escoge el servicio, la manicurista y la fecha para ver las horas libres.");
+            aviso(document.getElementById("formReserva")
+                ? "Escoge el día, la manicurista y el servicio para ver las horas libres."
+                : "Escoge servicio, manicurista y fecha para ver las horas.");
             return;
         }
 
@@ -303,6 +284,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         });
                         boton.classList.add("escogida");
                         hora.value = h.hora;
+                        avisarCambioHoras();
                     });
 
                     cajaHoras.appendChild(boton);
@@ -315,6 +297,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         alert("La hora que tenías escogida ya no está disponible. Escoge otra.");
                     }
                 }
+
+                avisarCambioHoras();
             })
             .catch(function (error) {
                 console.error(error);
@@ -342,13 +326,295 @@ document.addEventListener("DOMContentLoaded", function () {
         }, 45000);
 
         // No se puede enviar sin escoger una hora.
+        // En la página de reservar se dice qué paso falta.
         hora.form.addEventListener("submit", function (evento) {
-            if (hora.value === "") {
-                evento.preventDefault();
-                alert("Escoge una hora tocando uno de los botones.");
-                cajaHoras.scrollIntoView({ behavior: "smooth", block: "center" });
+
+            if (hora.value !== "") {
+                return;
+            }
+
+            evento.preventDefault();
+
+            let falta = ["Escoge una hora tocando uno de los botones.", cajaHoras];
+
+            if (fecha.value === "") {
+                falta = ["Escoge el día de tu cita.", document.getElementById("paso-dia") || fecha];
+            } else if (manicurista.value === "") {
+                falta = ["Escoge tu manicurista.", document.getElementById("paso-manicurista") || manicurista];
+            } else if (servicio.value === "") {
+                falta = ["Escoge el servicio.", document.getElementById("paso-servicio") || servicio];
+            }
+
+            alert(falta[0]);
+            falta[1].scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+    }
+
+
+    // ==========================================
+    // RESERVA EN PASOS (paginas/reservar.php)
+    //   1 día → 2 manicurista → 3 servicio → 4 hora → 5 datos
+    // Cada botón solo escribe un valor en un campo oculto (fecha,
+    // manicurista, servicio) y avisa con un evento "change": el bloque
+    // de HORAS COMO BOTONES (arriba) escucha ese aviso y pide las horas.
+    // ==========================================
+
+    const formPasos = document.querySelector(".form-pasos");
+
+    if (formPasos) {
+
+        const pasoManicurista = document.getElementById("paso-manicurista");
+        const pasoServicio = document.getElementById("paso-servicio");
+        const pasoHora = document.getElementById("paso-hora");
+        const fechaOtra = document.getElementById("fecha-otra");
+        const resumen = document.getElementById("resumen");
+
+        const botonesDia = formPasos.querySelectorAll(".dia-btn");
+        const botonesManicurista = formPasos.querySelectorAll(".manicurista-btn");
+        const botonesServicio = formPasos.querySelectorAll(".servicio-btn");
+
+        // Marca un botón como escogido y desmarca los demás del grupo.
+        function marcar(grupo, escogido) {
+            grupo.forEach(function (b) {
+                b.classList.toggle("escogida", b === escogido);
+            });
+        }
+
+        function desbloquear(paso, si) {
+            paso.classList.toggle("bloqueado", !si);
+        }
+
+        // Baja suavemente al siguiente paso (útil en el celular).
+        function irA(paso) {
+            paso.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+
+        function buscar(grupo, id) {
+            return Array.from(grupo).find(function (b) { return b.dataset.id === String(id); });
+        }
+
+        // Los servicios que hace una manicurista: "1,2,4" -> ["1","2","4"]
+        function serviciosDe(botonManicurista) {
+            return botonManicurista.dataset.servicios
+                ? botonManicurista.dataset.servicios.split(",")
+                : [];
+        }
+
+
+        // ---------- Paso 1: el día ----------
+
+        function escogerDia(valor) {
+
+            fecha.value = valor;
+
+            const boton = Array.from(botonesDia).find(function (b) { return b.dataset.fecha === valor; });
+            marcar(botonesDia, boton);
+
+            // Si el día no está en los botones, queda escrito en «¿Más adelante?»
+            fechaOtra.value = boton ? "" : valor;
+
+            desbloquear(pasoManicurista, valor !== "");
+            fecha.dispatchEvent(new Event("change"));
+            actualizarResumen();
+        }
+
+        botonesDia.forEach(function (boton) {
+            boton.addEventListener("click", function () {
+                escogerDia(boton.dataset.fecha);
+                irA(pasoManicurista);
+            });
+        });
+
+        fechaOtra.addEventListener("change", function () {
+            if (fechaOtra.value !== "") {
+                escogerDia(fechaOtra.value);
+                irA(pasoManicurista);
             }
         });
+
+
+        // ---------- Paso 2: la manicurista ----------
+        // Al escogerla, en el paso 3 solo quedan SUS servicios.
+
+        function escogerManicurista(boton) {
+
+            manicurista.value = boton.dataset.id;
+            marcar(botonesManicurista, boton);
+
+            const suyos = serviciosDe(boton);
+
+            botonesServicio.forEach(function (b) {
+                b.hidden = !suyos.includes(b.dataset.id);
+            });
+
+            // El servicio que estaba escogido no lo hace ella: se quita.
+            if (servicio.value !== "" && !suyos.includes(servicio.value)) {
+                servicio.value = "";
+                marcar(botonesServicio, null);
+                avisarManicuristas();
+            }
+
+            pasoServicio.querySelector(".paso-espera").textContent = suyos.length
+                ? "Estos son los servicios que hace " + boton.dataset.nombre + "."
+                : boton.dataset.nombre + " no tiene servicios asignados todavía. Escoge otra manicurista.";
+
+            desbloquear(pasoServicio, true);
+            desbloquear(pasoHora, servicio.value !== "");
+
+            manicurista.dispatchEvent(new Event("change"));
+            actualizarResumen();
+        }
+
+        botonesManicurista.forEach(function (boton) {
+            boton.addEventListener("click", function () {
+                escogerManicurista(boton);
+                irA(servicio.value !== "" ? pasoHora : pasoServicio);
+            });
+        });
+
+
+        // ---------- Paso 3: el servicio ----------
+
+        function escogerServicio(boton) {
+            servicio.value = boton.dataset.id;
+            marcar(botonesServicio, boton);
+            desbloquear(pasoHora, true);
+            servicio.dispatchEvent(new Event("change"));
+            avisarManicuristas();
+            actualizarResumen();
+        }
+
+        botonesServicio.forEach(function (boton) {
+            boton.addEventListener("click", function () {
+                escogerServicio(boton);
+                irA(pasoHora);
+            });
+        });
+
+        // Si ya hay un servicio escogido (vino desde la portada con ?servicio=3),
+        // a las manicuristas que no lo hacen se les avisa. Igual se pueden escoger:
+        // en ese caso se quita el servicio y la clienta escoge otro.
+        function avisarManicuristas() {
+            botonesManicurista.forEach(function (b) {
+                const noLoHace = servicio.value !== "" && !serviciosDe(b).includes(servicio.value);
+                b.classList.toggle("no-hace", noLoHace);
+                b.querySelector(".manicurista-aviso").textContent = noLoHace ? "No hace este servicio" : "";
+            });
+        }
+
+
+        // ---------- Resumen de lo escogido ----------
+
+        function actualizarResumen() {
+
+            const partes = [];
+
+            if (fecha.value !== "") {
+                // "2026-10-02" -> "viernes 2 de octubre" (T12:00 evita que la zona horaria cambie el día)
+                partes.push(new Date(fecha.value + "T12:00:00").toLocaleDateString("es-CO", {
+                    weekday: "long", day: "numeric", month: "long"
+                }));
+            }
+
+            const btnHora = document.querySelector(".hora-btn.escogida");
+            if (hora.value !== "" && btnHora) {
+                partes.push("a las " + btnHora.firstChild.textContent.trim());
+            }
+
+            const m = buscar(botonesManicurista, manicurista.value);
+            if (m) {
+                partes.push("con " + m.dataset.nombre);
+            }
+
+            const s = buscar(botonesServicio, servicio.value);
+            if (s) {
+                partes.push(s.dataset.nombre + " (" + s.dataset.precio + ", " + s.dataset.duracion + " min)");
+            }
+
+            resumen.hidden = partes.length === 0;
+            resumen.textContent = "Tu cita: " + partes.join(" · ");
+            resumen.classList.toggle("completo", hora.value !== "");
+        }
+
+        document.getElementById("horas").addEventListener("horas-cambiaron", actualizarResumen);
+
+
+        // ---------- Al abrir la página ----------
+        // Si volvió de un error, o llegó con ?servicio=, se marca lo que ya estaba escogido.
+
+        if (fecha.value !== "") {
+            escogerDia(fecha.value);
+        }
+
+        const mInicial = buscar(botonesManicurista, manicurista.value);
+        const sInicial = buscar(botonesServicio, servicio.value);
+
+        if (sInicial) {
+            marcar(botonesServicio, sInicial);
+            avisarManicuristas();
+        } else {
+            servicio.value = "";
+        }
+
+        if (mInicial && fecha.value !== "") {
+            escogerManicurista(mInicial);
+        } else {
+            manicurista.value = "";
+        }
+
+        actualizarResumen();
+    }
+
+
+    // ==========================================
+    // CITA EN EL SALÓN: al escoger el servicio, en «Manicurista»
+    // solo se pueden escoger las que lo hacen (data-servicios="1,2,4").
+    // ==========================================
+
+    if (servicio && manicurista && manicurista.tagName === "SELECT") {
+
+        function filtrarManicuristas() {
+
+            Array.from(manicurista.options).forEach(function (op) {
+
+                if (!op.value) {
+                    return;
+                }
+
+                const suyos = (op.dataset.servicios || "").split(",");
+                op.disabled = servicio.value !== "" && !suyos.includes(servicio.value);
+
+                if (op.disabled && op.selected) {
+                    manicurista.value = "";
+                    manicurista.dispatchEvent(new Event("change"));
+                }
+            });
+        }
+
+        servicio.addEventListener("change", filtrarManicuristas);
+        filtrarManicuristas();
+    }
+
+
+    // ==========================================
+    // BLOQUEOS: con «Todo el día» no hace falta escribir las horas
+    // ==========================================
+
+    const todoElDia = document.getElementById("todo-el-dia");
+
+    if (todoElDia) {
+
+        const cajaHorasBloqueo = document.getElementById("horas-bloqueo");
+
+        function mostrarHorasBloqueo() {
+            cajaHorasBloqueo.hidden = todoElDia.checked;
+            cajaHorasBloqueo.querySelectorAll("input").forEach(function (campo) {
+                campo.required = !todoElDia.checked;
+            });
+        }
+
+        todoElDia.addEventListener("change", mostrarHorasBloqueo);
+        mostrarHorasBloqueo();
     }
 
 

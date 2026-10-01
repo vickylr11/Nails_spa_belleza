@@ -71,6 +71,20 @@ $stmt->execute();
 
 $reservas = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
+// Bloqueos del día (ratos en que una manicurista no puede atender).
+$stmt = $conexion->prepare("
+    SELECT b.hora_inicio, b.hora_fin, b.motivo, m.nombre AS manicurista
+    FROM bloqueos b
+    INNER JOIN manicuristas m ON m.id_manicurista = b.id_manicurista
+    WHERE b.fecha = ?
+    AND (? = 0 OR b.id_manicurista = ?)
+    ORDER BY b.hora_inicio, m.nombre
+");
+$stmt->bind_param("sii", $fecha, $filtro_manicurista, $filtro_manicurista);
+$stmt->execute();
+
+$bloqueos = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
 $activas = 0;
 
 foreach ($reservas as $r) {
@@ -213,6 +227,28 @@ require_once "../includes/header.php";
         </div>
 
     </div>
+
+
+    <?php if (count($bloqueos) > 0): ?>
+
+        <!-- Ratos bloqueados ese día: nadie puede agendar ahí -->
+        <div class="bloqueos-dia">
+
+            <strong>⛔ No disponibles este día</strong>
+
+            <?php foreach ($bloqueos as $b): ?>
+                <span>
+                    <?= es_admin() ? htmlspecialchars($b['manicurista']) . ' · ' : '' ?>
+                    <?= date('g:i A', strtotime($b['hora_inicio'])) ?> – <?= date('g:i A', strtotime($b['hora_fin'])) ?>
+                    <?= $b['motivo'] ? '· ' . htmlspecialchars($b['motivo']) : '' ?>
+                </span>
+            <?php endforeach; ?>
+
+            <a href="bloqueos.php">Ver bloqueos</a>
+
+        </div>
+
+    <?php endif; ?>
 
 
     <div class="tabla-contenedor">

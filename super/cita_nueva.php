@@ -21,11 +21,16 @@ $servicios = $conexion->query("
     ORDER BY nombre
 ")->fetch_all(MYSQLI_ASSOC);
 
+// Con la lista de servicios que hace cada una ("1,2,4"): al escoger el servicio,
+// el JavaScript deja escoger solo a las que lo hacen.
 $manicuristas = $conexion->query("
-    SELECT id_manicurista, nombre
-    FROM manicuristas
-    WHERE activa = 1
-    ORDER BY nombre
+    SELECT m.id_manicurista, m.nombre,
+        GROUP_CONCAT(ms.id_servicio) AS servicios
+    FROM manicuristas m
+    LEFT JOIN manicurista_servicio ms ON ms.id_manicurista = m.id_manicurista
+    WHERE m.activa = 1
+    GROUP BY m.id_manicurista, m.nombre
+    ORDER BY m.nombre
 ")->fetch_all(MYSQLI_ASSOC);
 
 $estado_elegido = $viejo['estado'] ?? 'Confirmada';
@@ -95,6 +100,7 @@ require_once "../includes/header.php";
                     <option value="">Escoge…</option>
                     <?php foreach ($manicuristas as $m): ?>
                         <option value="<?= $m['id_manicurista'] ?>"
+                            data-servicios="<?= htmlspecialchars($m['servicios'] ?? '') ?>"
                             <?= intval($viejo['id_manicurista'] ?? 0) === intval($m['id_manicurista']) ? 'selected' : '' ?>>
                             <?= htmlspecialchars($m['nombre']) ?>
                         </option>

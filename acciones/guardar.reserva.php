@@ -8,6 +8,12 @@ require_once "../includes/fidelidad.php";
 // Devuelve al formulario con un mensaje y no sigue.
 function volver($mensaje)
 {
+    // Se guarda un momento lo que escogió (día, manicurista, servicio, datos)
+    // para que el formulario lo vuelva a mostrar y no tenga que empezar de cero.
+    $_SESSION['reserva_vieja'] = array_intersect_key($_POST, array_flip([
+        'nombre', 'telefono', 'correo', 'fecha', 'id_manicurista', 'id_servicio'
+    ]));
+
     header(
         "Location: ../paginas/reservar.php?error=" .
         urlencode($mensaje)

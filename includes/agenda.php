@@ -126,6 +126,8 @@ function etiqueta_motivo($motivo)
     if (str_contains($motivo, "terminaría")) return "No alcanza";
     if (str_contains($motivo, "se cruza con esa hora")) return "Ocupada";
     if (str_contains($motivo, "no atiende")) return "Cerrado";
+    if (str_contains($motivo, "no hace ese servicio")) return "No lo hace";
+    if (str_contains($motivo, "no puede atender")) return "No disponible";
     return "No disponible";
 }
 
@@ -162,6 +164,21 @@ function revisar_cita($conexion, $fecha, $hora, $id_servicio, $id_manicurista, $
 
     if ($stmt->get_result()->num_rows === 0) {
         return "Esa manicurista no está disponible.";
+    }
+
+    // 2b. Esa manicurista hace ese servicio (tabla manicurista_servicio).
+    //     La página ya muestra solo sus servicios, pero el servidor lo
+    //     vuelve a revisar: el formulario se puede cambiar con F12.
+    $stmt = $conexion->prepare("
+        SELECT 1
+        FROM manicurista_servicio
+        WHERE id_manicurista = ? AND id_servicio = ?
+    ");
+    $stmt->bind_param("ii", $id_manicurista, $id_servicio);
+    $stmt->execute();
+
+    if ($stmt->get_result()->num_rows === 0) {
+        return "Esa manicurista no hace ese servicio.";
     }
 
     // 3. Fecha y hora válidas y no pasadas.
@@ -237,6 +254,24 @@ function revisar_cita($conexion, $fecha, $hora, $id_servicio, $id_manicurista, $
 
     if ($stmt->get_result()->num_rows > 0) {
         return "Esa manicurista ya tiene una cita que se cruza con esa hora.";
+    }
+
+    // 7. La manicurista no bloqueó ese rato (cita médica, reunión...).
+    //    Misma regla del choque que las citas. El motivo no se dice:
+    //    es privado de ella (super/bloqueos.php).
+    $stmt = $conexion->prepare("
+        SELECT id_bloqueo
+        FROM bloqueos
+        WHERE fecha = ?
+        AND id_manicurista = ?
+        AND hora_inicio < ?
+        AND hora_fin > ?
+    ");
+    $stmt->bind_param("siss", $fecha, $id_manicurista, $hora_fin, $hora_inicio);
+    $stmt->execute();
+
+    if ($stmt->get_result()->num_rows > 0) {
+        return "Esa manicurista no puede atender a esa hora. Escoge otra hora u otra manicurista.";
     }
 
     return "";

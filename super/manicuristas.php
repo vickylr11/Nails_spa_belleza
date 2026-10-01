@@ -28,6 +28,36 @@ $viejo = $_SESSION['viejo'] ?? null;
 unset($_SESSION['viejo']);
 
 
+// Todos los servicios activos, para las casillas «¿Qué servicios hace?».
+$servicios = $conexion->query("
+    SELECT id_servicio, nombre
+    FROM servicios
+    WHERE activo = 1
+    ORDER BY nombre
+")->fetch_all(MYSQLI_ASSOC);
+
+// Cuáles van marcados:
+//   volvió de un error -> los que había marcado
+//   editando           -> los que hace (tabla manicurista_servicio)
+//   nueva              -> todos (lo normal es que haga casi todo; se desmarca lo que no)
+if ($viejo !== null) {
+
+    $marcados = array_map('intval', $viejo['servicios'] ?? []);
+
+} elseif ($editar) {
+
+    $stmt = $conexion->prepare("SELECT id_servicio FROM manicurista_servicio WHERE id_manicurista = ?");
+    $stmt->bind_param("i", $editar['id_manicurista']);
+    $stmt->execute();
+
+    $marcados = array_map('intval', array_column($stmt->get_result()->fetch_all(MYSQLI_ASSOC), 'id_servicio'));
+
+} else {
+
+    $marcados = array_map('intval', array_column($servicios, 'id_servicio'));
+}
+
+
 // Lista con: citas próximas y si tiene cuenta para entrar.
 $manicuristas = $conexion->query("
     SELECT m.*,
@@ -35,6 +65,10 @@ $manicuristas = $conexion->query("
          WHERE r.id_manicurista = m.id_manicurista
          AND r.fecha >= CURDATE()
          AND r.estado IN ('Pendiente', 'Confirmada')) AS citas_proximas,
+        (SELECT GROUP_CONCAT(s.nombre ORDER BY s.nombre SEPARATOR ', ')
+         FROM manicurista_servicio ms
+         JOIN servicios s ON s.id_servicio = ms.id_servicio AND s.activo = 1
+         WHERE ms.id_manicurista = m.id_manicurista) AS que_hace,
         u.correo
     FROM manicuristas m
     LEFT JOIN usuarios u ON u.id_manicurista = m.id_manicurista
@@ -70,7 +104,7 @@ require_once "../includes/header.php";
 
             <h2><?= $editar ? 'Editar manicurista' : 'Nueva manicurista' ?></h2>
 
-            <form action="guardar_manicurista.php" method="POST">
+            <form action="guardar_manicurista.php" method="POST" enctype="multipart/form-data">
 
                 <input type="hidden" name="accion" value="guardar">
 
@@ -101,6 +135,51 @@ require_once "../includes/header.php";
                     Cambiarlo no altera lo que ya se le pagó.
                 </p>
 
+                <label>Foto (JPG, PNG o WEBP, máximo 5 MB)</label>
+
+                <?php if (!empty($editar['foto'])): ?>
+                    <img
+                        src="../<?= htmlspecialchars($editar['foto']) ?>"
+                        alt="Foto actual"
+                        class="foto-manicurista-grande"
+                    >
+                <?php endif; ?>
+
+                <input type="file" name="foto" accept="image/jpeg,image/png,image/webp">
+
+                <p class="nota">
+                    Sale en la página de reservar. Mejor una foto cuadrada, de la cara.
+                    <?= $editar ? 'Si no escoges una nueva, se conserva la actual.' : 'Sin foto, se muestran sus iniciales.' ?>
+                </p>
+
+                <?php if (!empty($editar['foto'])): ?>
+                    <label class="casilla">
+                        <input type="checkbox" name="quitar_foto" value="1">
+                        Quitar la foto (mostrar sus iniciales)
+                    </label>
+                <?php endif; ?>
+
+                <label>¿Qué servicios hace?</label>
+
+                <div class="casillas-servicios">
+                    <?php foreach ($servicios as $s): ?>
+                        <label class="casilla">
+                            <input
+                                type="checkbox"
+                                name="servicios[]"
+                                value="<?= $s['id_servicio'] ?>"
+                                <?= in_array(intval($s['id_servicio']), $marcados, true) ? 'checked' : '' ?>
+                            >
+                            <?= htmlspecialchars($s['nombre']) ?>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+
+                <p class="nota">
+                    En la página, al escogerla, la clienta solo ve estos servicios.
+                    Quitar uno no cambia las citas que ya tiene agendadas.
+                </p>
+
                 <p class="nota">
                     Una manicurista nueva empieza a recibir citas de inmediato.
                     Para que entre a ver su agenda, créele una cuenta en <a href="usuarios.php">Usuarios</a>.
@@ -125,11 +204,10 @@ require_once "../includes/header.php";
 
                 <thead>
                     <tr>
-                        <th>Nombre</th>
+                        <th>Manicurista</th>
                         <th>Gana</th>
-                        <th>Citas próximas</th>
+                        <th>Por atender</th>
                         <th>Cuenta</th>
-                        <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -140,7 +218,27 @@ require_once "../includes/header.php";
 
                     <tr class="<?= $m['activa'] ? '' : 'fila-inactiva' ?>">
 
-                        <td><strong><?= htmlspecialchars($m['nombre']) ?></strong></td>
+                        <td>
+                            <div class="celda-manicurista">
+
+                                <?php if ($m['foto']): ?>
+                                    <img src="../<?= htmlspecialchars($m['foto']) ?>" alt="" class="foto-manicurista">
+                                <?php else: ?>
+                                    <span class="foto-manicurista avatar-iniciales"><?= htmlspecialchars(iniciales($m['nombre'])) ?></span>
+                                <?php endif; ?>
+
+                                <div>
+                                    <strong><?= htmlspecialchars($m['nombre']) ?></strong>
+
+                                    <?php if (!$m['activa']): ?>
+                                        <span class="estado estado-cancelada">Inactiva</span>
+                                    <?php endif; ?>
+
+                                    <small><?= $m['que_hace'] ? htmlspecialchars($m['que_hace']) : '⚠ Sin servicios: no sale en la página' ?></small>
+                                </div>
+
+                            </div>
+                        </td>
 
                         <td><?= $m['porcentaje'] ?>%</td>
 
@@ -148,23 +246,17 @@ require_once "../includes/header.php";
 
                         <td>
                             <?php if ($m['correo']): ?>
-                                <?= htmlspecialchars($m['correo']) ?>
+                                <small><?= htmlspecialchars($m['correo']) ?></small>
                             <?php else: ?>
                                 <a href="usuarios.php?nueva_para=<?= $m['id_manicurista'] ?>">Crear cuenta</a>
                             <?php endif; ?>
-                        </td>
-
-                        <td>
-                            <span class="estado <?= $m['activa'] ? 'estado-confirmada' : 'estado-cancelada' ?>">
-                                <?= $m['activa'] ? 'Activa' : 'Inactiva' ?>
-                            </span>
                         </td>
 
                         <td class="acciones-fila">
 
                             <a href="manicuristas.php?id=<?= $m['id_manicurista'] ?>" class="btn-pequeno">Editar</a>
 
-                            <form action="guardar_manicurista.php" method="POST">
+                            <form action="guardar_manicurista.php" method="POST" enctype="multipart/form-data">
                                 <input type="hidden" name="accion" value="cambiar_activa">
                                 <input type="hidden" name="id_manicurista" value="<?= $m['id_manicurista'] ?>">
                                 <button type="submit" class="btn-pequeno">

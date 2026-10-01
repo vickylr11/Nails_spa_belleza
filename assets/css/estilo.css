@@ -311,7 +311,7 @@ small {
     font-size: 13px;
     font-weight: 600;
     text-decoration: none;
-    padding: 6px 12px;
+    padding: 6px 8px;      /* 10 enlaces del administrador: que quepan en una línea */
     border-radius: 20px;
 }
 
@@ -799,11 +799,273 @@ select option:disabled {
     align-items: start;
 }
 
-/* Los campos del formulario, de a dos por fila */
-.reserva-layout form {
+/* Sin esto, la fila de días (que se desliza de lado en el celular)
+   estira la columna y la página entera queda más ancha que la pantalla. */
+.reserva-layout > * {
+    min-width: 0;
+}
+
+/* ---------- Los pasos (1 día, 2 manicurista, 3 servicio, 4 hora, 5 datos) ---------- */
+
+.form-card .form-pasos {
+    gap: 26px;     /* .form-card form trae 6px: aquí los pasos van más separados */
+}
+
+.paso-reserva h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 21px;
+}
+
+.numero-paso {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--vino);
+    color: var(--blanco);
+    font-family: var(--letra);
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.paso-reserva .paso-espera {
+    margin: -4px 0 10px;
+}
+
+/* Paso que todavía no se puede usar: se ve apagado y no se puede tocar */
+.paso-reserva.bloqueado .numero-paso {
+    background: var(--rosa-medio);
+}
+
+.paso-reserva.bloqueado > :not(h2):not(.paso-espera) {
+    opacity: .35;
+    pointer-events: none;
+    filter: grayscale(.6);
+}
+
+.paso-reserva:not(.bloqueado) .solo-bloqueado {
+    display: none;
+}
+
+/* Botón escogido de cualquier paso (día, manicurista, servicio) */
+.dia-btn.escogida,
+.manicurista-btn.escogida,
+.servicio-btn.escogida {
+    border-color: var(--vino);
+    box-shadow: 0 0 0 3px rgba(167, 25, 88, .18);
+}
+
+/* ---------- Paso 1: días ---------- */
+
+.dias-botones {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.dia-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    padding: 8px 4px;
+    border: 1.5px solid var(--borde);
+    border-radius: var(--radio-chico);
+    background: var(--blanco);
+    color: var(--texto);
+    font-family: inherit;
+    cursor: pointer;
+    transition: background .15s, transform .15s;
+}
+
+.dia-btn small {
+    font-size: 11px;
+    color: var(--gris);
+    text-transform: capitalize;
+}
+
+.dia-btn strong {
+    font-size: 20px;
+    line-height: 1.1;
+    color: var(--morado);
+}
+
+.dia-btn:hover:not(:disabled) {
+    background: var(--rosa-claro);
+    transform: translateY(-1px);
+}
+
+.dia-btn.escogida {
+    background: var(--vino);
+}
+
+.dia-btn.escogida small,
+.dia-btn.escogida strong {
+    color: var(--blanco);
+}
+
+.dia-btn:disabled {
+    cursor: not-allowed;
+    background: #f3eef1;
+    opacity: .6;
+}
+
+.otra-fecha {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    font-weight: 500;
+    color: var(--gris);
+}
+
+.otra-fecha input {
+    width: auto;
+    padding: 7px 10px;
+}
+
+/* ---------- Paso 2: manicuristas con foto ---------- */
+
+.manicuristas-opciones {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+}
+
+.manicurista-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 10px 12px;
+    border: 1.5px solid var(--borde);
+    border-radius: var(--radio);
+    background: var(--blanco);
+    color: var(--morado);
+    font-family: inherit;
+    font-size: 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: background .15s, transform .15s;
+}
+
+.manicurista-btn:hover {
+    background: var(--rosa-claro);
+    transform: translateY(-2px);
+}
+
+.manicurista-btn img,
+.manicurista-btn .avatar-iniciales {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--rosa);
+}
+
+.manicurista-btn.escogida {
+    background: var(--rosa-claro);
+}
+
+.manicurista-btn.escogida img,
+.manicurista-btn.escogida .avatar-iniciales {
+    border-color: var(--vino);
+}
+
+/* Ya hay un servicio escogido y ella no lo hace */
+.manicurista-btn.no-hace {
+    opacity: .55;
+}
+
+.manicurista-aviso {
+    font-size: 11px;
+    color: var(--rojo);
+}
+
+.manicurista-aviso:empty {
+    display: none;
+}
+
+/* Círculo con las iniciales (manicurista sin foto) */
+.avatar-iniciales {
+    display: grid;
+    place-items: center;
+    background: linear-gradient(145deg, var(--rosa-medio), var(--vino));
+    color: var(--blanco);
+    font-family: var(--letra-titulos);
+    font-size: 28px;
+    font-weight: 700;
+}
+
+/* ---------- Paso 3: servicios ---------- */
+
+.servicios-opciones {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 10px;
+}
+
+.servicio-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border: 1.5px solid var(--borde);
+    border-radius: var(--radio-chico);
+    background: var(--blanco);
+    color: var(--texto);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background .15s;
+}
+
+.servicio-btn[hidden] {
+    display: none;
+}
+
+.servicio-btn:hover,
+.servicio-btn.escogida {
+    background: var(--rosa-claro);
+}
+
+.servicio-btn img {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.servicio-btn-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.servicio-btn-texto strong {
+    font-size: 14px;
+    color: var(--morado);
+}
+
+.servicio-btn-texto small {
+    font-size: 12px;
+    color: var(--vino);
+    font-weight: 600;
+}
+
+/* ---------- Paso 5: datos (de a dos por fila) ---------- */
+
+.datos-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 4px 18px;
+    margin-bottom: 8px;
 }
 
 .campo-reserva {
@@ -812,12 +1074,27 @@ select option:disabled {
     gap: 6px;
 }
 
-/* ---------- Horas como botones ---------- */
-
-/* El bloque de horas ocupa todo el ancho del formulario */
-.campo-horas {
-    grid-column: 1 / -1;
+/* Resumen antes de confirmar */
+.resumen-cita {
+    padding: 14px 16px;
+    border-radius: var(--radio-chico);
+    background: var(--rosa-claro);
+    border: 1.5px dashed var(--rosa-medio);
+    color: var(--morado);
+    font-size: 14px;
+    font-weight: 500;
 }
+
+.resumen-cita.completo {
+    border-style: solid;
+    border-color: var(--vino);
+}
+
+.resumen-cita::first-letter {
+    text-transform: uppercase;
+}
+
+/* ---------- Horas como botones ---------- */
 
 .horas-botones {
     display: grid;
@@ -888,11 +1165,6 @@ select option:disabled {
     text-transform: uppercase;
     letter-spacing: .3px;
     color: #a7959e;
-}
-
-.campo-boton {
-    display: flex;
-    align-items: flex-end;
 }
 
 /* Tarjeta de la derecha */
@@ -1146,6 +1418,111 @@ tbody td:first-child {
     max-height: 170px;
     object-fit: cover;
     border-radius: var(--radio-chico);
+}
+
+/* Foto de la manicurista en el panel (redonda) */
+.foto-manicurista {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    font-size: 17px;
+}
+
+/* En la lista: foto + nombre + qué hace, en una sola celda */
+.celda-manicurista {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 200px;
+}
+
+.celda-manicurista small {
+    display: block;
+    max-width: 200px;
+    white-space: normal;     /* las celdas de las tablas no parten el texto: esta sí */
+    color: var(--gris);
+    line-height: 1.4;
+}
+
+.celda-manicurista .foto-manicurista {
+    flex-shrink: 0;
+}
+
+.foto-manicurista-grande {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Bloqueos: «Desde» y «Hasta» lado a lado */
+.horas-bloqueo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.horas-bloqueo[hidden] {
+    display: none;
+}
+
+.horas-bloqueo div {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Agenda: franja con los ratos bloqueados del día */
+.bloqueos-dia {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    border-radius: var(--radio-chico);
+    background: #f3eef1;
+    border-left: 5px solid var(--gris);
+    font-size: 14px;
+}
+
+.bloqueos-dia span {
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--blanco);
+}
+
+.bloqueos-dia a {
+    margin-left: auto;
+    color: var(--vino);
+    font-weight: 600;
+}
+
+/* Casillas «¿Qué servicios hace?» */
+.casillas-servicios {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    border: 1.5px solid var(--borde);
+    border-radius: var(--radio-chico);
+}
+
+.casilla {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-weight: 500;
+    color: var(--texto);
+    cursor: pointer;
+}
+
+.casilla input {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--vino);
 }
 
 .acciones-fila {
@@ -1608,8 +1985,29 @@ footer {
         padding: 22px 18px;
     }
 
-    .reserva-layout form {
+    .datos-grid {
         grid-template-columns: 1fr;
+    }
+
+    /* 14 días: en el celular, una fila que se desliza de lado */
+    .dias-botones {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 6px;
+    }
+
+    .dia-btn {
+        min-width: 58px;
+    }
+
+    .manicuristas-opciones {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .manicurista-btn img,
+    .manicurista-btn .avatar-iniciales {
+        width: 70px;
+        height: 70px;
     }
 
     .filtros input,

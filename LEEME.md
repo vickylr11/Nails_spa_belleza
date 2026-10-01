@@ -1,15 +1,16 @@
-# Nails Spa Belleza — versión corregida v9 (referencia del docente)
+# Nails Spa Belleza — versión corregida v11 (referencia del docente)
 
 Hecha sobre la versión del grupo del 28/09/2026 (commit "actualizaciones", con las 4 manicuristas,
 el logo y las fotos). Se conservó su diseño, sus fotos, mysqli y el nombre `guardar.reserva.php`.
-Acompaña a `Grupo5_NailsSpa_Lista_temas_puntuales_v5.pdf`.
+Acompaña a `Grupo5_NailsSpa_Lista_temas_puntuales_v10.pdf`.
 
 ## Instalar
-- **Base que ya tienen** (con la columna `manicurista` de texto): phpMyAdmin > nails_spa > SQL >
-  pegar `sql/actualizacion.sql` y después `sql/actualizacion_2.sql`, cada una UNA vez. No borran citas.
-  y luego `_3.sql` y `_4.sql`, cada una UNA vez, en ese orden. Si ya hicieron algunas, solo las que faltan.
-  (Base del `nails.spa.sql` de la v4, v5 o v6: faltan `_3` y `_4`. De la v7: solo `_4`.)
-- **Base nueva**: importar `sql/nails.spa.sql`.
+- **Base de datos:** un solo script, `sql/nails.spa.sql`. En phpMyAdmin: pestaña **Importar** >
+  seleccionar el archivo > Importar. Crea todo desde cero (tablas, servicios, horarios, manicuristas
+  y usuarios de ejemplo). **Ojo:** empieza con `DROP DATABASE IF EXISTS nails_spa`, así que borra lo
+  que tenga esa base. Si hay datos que conservar, exportarlos antes.
+- Fotos de las manicuristas: la carpeta `assets/img/manicuristas/` debe dejar escribir
+  (en la Terminal, dentro del proyecto: `chmod 777 assets/img/manicuristas`).
 - Funciona en cualquier carpeta de htdocs (probado en `Blanquizal/PracticaLaboral/Nails_spa_belleza`).
 - Zona del personal: **`/super/`** (el login es `/super/login.php`). No hay enlace público.
 - Usuarios (cambiar TODAS las claves antes de entregar, en «Mi contraseña»):
@@ -42,7 +43,7 @@ Nails_spa_belleza/
 │   └── clave.php  guardar_clave.php         cada quien cambia su contraseña
 ├── includes/   (bloqueada)   header, footer, agenda.php (la regla), seguridad.php (roles), panel.php (ayudas de formularios y fotos)
 ├── conexion/   (bloqueada)
-└── sql/        (bloqueada)   nails.spa.sql, actualizacion.sql
+└── sql/        (bloqueada)   nails.spa.sql (el script final, único)
 ```
 
 `includes/`, `conexion/` y `sql/` tienen `.htaccess` con `Require all denied`: desde el navegador dan 403
@@ -123,11 +124,39 @@ en gris con el motivo: Ocupada, Descanso o No alcanza. Las que ya pasaron ni se 
 - `assets/js/script.js`: al tocar un botón, su hora queda en el campo oculto `hora`; no deja enviar sin
   escoger; cada 45 s se actualiza y, si la hora escogida se ocupó, avisa.
 
+## Bloqueos de horario (v11)
+`super/bloqueos.php` («Mis bloqueos» para la manicurista, «Bloqueos» para el administrador): una
+manicurista anota un rato en que no puede atender (cita médica, reunión…) y nadie la puede agendar ahí.
+- Tabla `bloqueos` (manicurista, fecha, hora_inicio, hora_fin, motivo, quién lo registró).
+  «Todo el día» = desde que abre hasta que cierra el salón ese día.
+- Bloqueo **directo**, sin aprobación. La manicurista solo crea y quita los suyos (el número sale de su
+  sesión); el administrador, los de cualquiera.
+- `revisar_cita` regla 7: un bloqueo choca igual que una cita. En la página y en el salón esas horas
+  salen «No disponible» (el motivo solo lo ve el personal) y el servidor rechaza la reserva.
+- No deja bloquear si ya tiene citas en ese rato (dice cuáles), ni días pasados o cerrados, ni dos
+  bloqueos que se crucen. Transacción con la fila de la manicurista bloqueada (`FOR UPDATE`), igual que
+  al reservar. Se pueden quitar (los de hoy en adelante).
+- La agenda muestra arriba una franja «⛔ No disponibles este día».
+
+## Reservar en pasos (v10)
+`paginas/reservar.php`: **1 día → 2 manicurista → 3 servicio → 4 hora → 5 datos**.
+- Día: botones con los próximos 14 días (los cerrados en gris) y «¿Más adelante?» para otra fecha.
+- Manicurista: tarjetas con su foto (`manicuristas.foto`) o sus iniciales si no tiene.
+- Servicio: solo los que hace ESA manicurista. Va antes de la hora porque la duración decide qué horas
+  alcanzan. Si llega de la portada con `?servicio=`, a las que no lo hacen se les avisa.
+- Hora: los mismos botones de siempre. Abajo, un resumen de la cita antes de «Confirmar».
+- Cada paso llena un campo oculto (`fecha`, `id_manicurista`, `id_servicio`, `hora`); el paso siguiente
+  se ve apagado hasta escoger el anterior. Si la reserva falla, vuelve con lo escogido (no empieza de cero).
+- Tabla nueva `manicurista_servicio` (muchos a muchos). `revisar_cita` revisa también que ella haga ese
+  servicio. Panel > Manicuristas: foto y casillas «¿Qué servicios hace?» (al menos uno). Un servicio
+  nuevo queda asignado a todas las activas. Servicios muestra quién lo hace. En «Cita en el salón», al
+  escoger el servicio solo se pueden escoger las manicuristas que lo hacen.
+- La confirmación por WhatsApp no cambia: botón en la agenda.
+
 ## Tarjeta de fidelidad: la cita 10 es gratis (v8)
 
 - La clienta se reconoce por su **celular**, guardado siempre igual (10 dígitos: `normalizar_telefono()`),
-  y ahora es `UNIQUE`. `actualizacion_4.sql` limpia los celulares ya guardados y, si una clienta quedó
-  dos veces, junta sus citas en un solo registro.
+  y es `UNIQUE`: no puede haber dos clientas con el mismo celular.
 - Regla en `includes/fidelidad.php` (una sola vez): solo cuentan las citas **Completadas**; después de
   9 pagadas, la siguiente es gratis (`reservas.gratis = 1`). El contador **no se guarda: se calcula**
   (`SUM(...)` sobre sus citas). Una gratis reservada no se puede usar dos veces; si se cancela, vuelve.
@@ -193,6 +222,6 @@ no muestre la versión vieja guardada en caché. Probado en 390, 768 y 1366 px s
 | `super/cambiar_estado.php` | reemplaza `cancelar_reserva.php`: estados por rol, una cancelada no se reactiva |
 | `super/guardar_horarios.php`, `super/horarios.php` | solo admin; valida los 7 días antes de guardar |
 | `assets/css/estilo.css` | estados, mensajes de error, horas deshabilitadas, arreglo para celular |
-| `sql/` | tabla `manicuristas`, `reservas.id_manicurista`, sin UNIQUE(fecha,hora), 5 estados, RESTRICT, `usuarios` con rol, `SET NAMES utf8mb4` |
+| `sql/nails.spa.sql` | script final único: 9 tablas (clientes, servicios, manicuristas, manicurista_servicio, reservas, usuarios, pagos, bloqueos, horarios), sin UNIQUE(fecha,hora), 5 estados, RESTRICT, roles, `SET NAMES utf8mb4` |
 
 Queda para el grupo: galería de diseños, datos y horario reales, cambiar la clave, exportar el .sql final.

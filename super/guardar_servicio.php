@@ -156,5 +156,18 @@ if ($id > 0) {
     $stmt->bind_param("ssiis", $nombre, $descripcion, $precio, $duracion, $imagen);
     $stmt->execute();
 
-    volver_con_mensaje("servicios.php", "Servicio creado. Ya aparece en la página y en el formulario de reserva.");
+    // Un servicio nuevo queda asignado a TODAS las manicuristas activas
+    // (si no, nadie lo haría y no se podría reservar). A la que no lo haga,
+    // se le quita en Manicuristas > Editar.
+    $id_nuevo = $conexion->insert_id;
+
+    $stmt = $conexion->prepare("
+        INSERT INTO manicurista_servicio (id_manicurista, id_servicio)
+        SELECT id_manicurista, ? FROM manicuristas WHERE activa = 1
+    ");
+    $stmt->bind_param("i", $id_nuevo);
+    $stmt->execute();
+
+    volver_con_mensaje("servicios.php", "Servicio creado y asignado a todas las manicuristas activas. " .
+        "A la que no lo haga, quíteselo en Manicuristas > Editar.");
 }

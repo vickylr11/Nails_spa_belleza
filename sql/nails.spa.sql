@@ -85,7 +85,39 @@ CREATE TABLE manicuristas (
     -- Porcentaje del precio de cada servicio que se le paga a la manicurista.
     porcentaje TINYINT UNSIGNED NOT NULL DEFAULT 50,
 
+    -- Ruta de la foto (ej. assets/img/manicuristas/manicurista_ab12.jpg).
+    -- NULL = sin foto: la página muestra sus iniciales en un círculo.
+    foto VARCHAR(255) NULL,
+
     activa TINYINT(1) DEFAULT 1
+
+);
+
+
+-- ==========================================
+-- TABLA: MANICURISTA_SERVICIO
+-- Qué servicios hace cada manicurista (relación muchos a muchos:
+-- una manicurista hace varios servicios y un servicio lo hacen varias).
+-- Una fila = "esta manicurista hace este servicio".
+-- En la página, al escoger una manicurista solo salen SUS servicios.
+-- ==========================================
+
+CREATE TABLE manicurista_servicio (
+
+    id_manicurista INT NOT NULL,
+
+    id_servicio INT NOT NULL,
+
+    -- La pareja no se puede repetir.
+    PRIMARY KEY (id_manicurista, id_servicio),
+
+    -- Si algún día se borrara una manicurista o un servicio, sus filas aquí
+    -- se van con él (CASCADE). Igual nunca se borran: se desactivan.
+    CONSTRAINT fk_ms_manicurista
+        FOREIGN KEY (id_manicurista) REFERENCES manicuristas(id_manicurista) ON DELETE CASCADE,
+
+    CONSTRAINT fk_ms_servicio
+        FOREIGN KEY (id_servicio) REFERENCES servicios(id_servicio) ON DELETE CASCADE
 
 );
 
@@ -240,6 +272,45 @@ CREATE TABLE pagos (
 
 );
 
+-- ==========================================
+-- TABLA: BLOQUEOS
+-- Ratos en que una manicurista NO puede atender (cita médica, reunión,
+-- diligencia...). La agenda los trata como una cita: esas horas no se
+-- pueden reservar. Los registra ella misma o el administrador.
+-- El motivo solo lo ve el personal; la clienta solo ve «No disponible».
+-- ==========================================
+
+CREATE TABLE bloqueos (
+
+    id_bloqueo INT AUTO_INCREMENT PRIMARY KEY,
+
+    id_manicurista INT NOT NULL,
+
+    fecha DATE NOT NULL,
+
+    hora_inicio TIME NOT NULL,
+
+    hora_fin TIME NOT NULL,
+
+    motivo VARCHAR(100) NULL,
+
+    -- Quién lo registró y cuándo.
+    id_usuario INT NOT NULL,
+
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_bloqueo_manicurista
+        FOREIGN KEY (id_manicurista) REFERENCES manicuristas(id_manicurista) ON DELETE RESTRICT,
+
+    CONSTRAINT fk_bloqueo_usuario
+        FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE RESTRICT,
+
+    -- El rato tiene que terminar después de empezar.
+    CONSTRAINT chk_bloqueo_horas
+        CHECK (hora_inicio < hora_fin)
+
+);
+
 -- La llave de reservas hacia pagos se agrega aquí, porque pagos se crea después de reservas.
 ALTER TABLE reservas
     ADD CONSTRAINT fk_reserva_pago
@@ -384,6 +455,20 @@ INSERT INTO manicuristas (nombre) VALUES
 ('Victoria Lemos'),
 ('Jennifer Atencia'),
 ('Valeria Albaran');
+
+
+-- ==========================================
+-- QUÉ SERVICIOS HACE CADA UNA (datos de ejemplo: el salón los cambia
+-- en el panel, Manicuristas > Editar)
+--   servicios: 1 Manicure clásico · 2 Pedicure clásico
+--              3 Manicure semipermanente · 4 Spa de uñas
+-- ==========================================
+
+INSERT INTO manicurista_servicio (id_manicurista, id_servicio) VALUES
+(1, 1), (1, 2), (1, 3), (1, 4),     -- Marangeles: todos
+(2, 1), (2, 3),                     -- Victoria: solo manos
+(3, 1), (3, 2), (3, 4),             -- Jennifer: no hace semipermanente
+(4, 1), (4, 2), (4, 3), (4, 4);     -- Valeria: todos
 
 
 -- ==========================================

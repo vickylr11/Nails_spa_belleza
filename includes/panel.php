@@ -70,10 +70,15 @@ function mostrar_mensajes()
 }
 
 
-// Sube la foto de un servicio.
+// Sube una foto (de un servicio o de una manicurista).
+// $tipo: 'servicios' o 'manicuristas' = la carpeta dentro de assets/img/.
 // Devuelve la ruta para guardar en la base, o un texto que empieza por "ERROR: ".
-function subir_imagen($archivo)
+function subir_imagen($archivo, $tipo = 'servicios')
 {
+    if (!in_array($tipo, ['servicios', 'manicuristas'], true)) {
+        return "ERROR: Tipo de foto no válido.";
+    }
+
     if ($archivo['error'] === UPLOAD_ERR_INI_SIZE || $archivo['error'] === UPLOAD_ERR_FORM_SIZE) {
         return "ERROR: La foto pesa demasiado (máximo 5 MB).";
     }
@@ -100,29 +105,35 @@ function subir_imagen($archivo)
         return "ERROR: El archivo no es una foto JPG, PNG o WEBP.";
     }
 
-    $carpeta = __DIR__ . "/../assets/img/servicios/";
+    $carpeta = __DIR__ . "/../assets/img/$tipo/";
 
     if (!is_writable($carpeta)) {
-        return "ERROR: La carpeta assets/img/servicios no deja guardar archivos. " .
-            "En la Terminal, dentro del proyecto: chmod 777 assets/img/servicios";
+        return "ERROR: La carpeta assets/img/$tipo no deja guardar archivos. " .
+            "En la Terminal, dentro del proyecto: chmod 777 assets/img/$tipo";
     }
 
     // Nombre nuevo al azar: nunca se usa el nombre que trae el archivo.
-    $nombre = "servicio_" . bin2hex(random_bytes(6)) . "." . $tipos[$info['mime']];
+    // servicios -> servicio_ab12cd.jpg · manicuristas -> manicurista_ab12cd.jpg
+    $nombre = rtrim($tipo, 's') . "_" . bin2hex(random_bytes(6)) . "." . $tipos[$info['mime']];
 
     if (!move_uploaded_file($archivo['tmp_name'], $carpeta . $nombre)) {
         return "ERROR: No se pudo guardar la foto en el servidor.";
     }
 
-    return "assets/img/servicios/" . $nombre;
+    return "assets/img/$tipo/" . $nombre;
 }
 
 
-// Borra una foto que se subió desde el panel (las de assets/img/servicios/).
+// Borra una foto que se subió desde el panel
+// (las de assets/img/servicios/ y assets/img/manicuristas/).
 // Las fotos originales del proyecto (assets/img/foto3.png...) nunca se borran.
 function borrar_imagen_subida($ruta)
 {
-    if ($ruta && str_starts_with($ruta, "assets/img/servicios/")) {
+    if (
+        $ruta &&
+        (str_starts_with($ruta, "assets/img/servicios/") || str_starts_with($ruta, "assets/img/manicuristas/")) &&
+        !str_contains($ruta, "..")
+    ) {
 
         $archivo = __DIR__ . "/../" . $ruta;
 
@@ -130,4 +141,19 @@ function borrar_imagen_subida($ruta)
             unlink($archivo);
         }
     }
+}
+
+
+// Iniciales para el círculo de una manicurista sin foto: "Victoria Lemos" -> "VL".
+function iniciales($nombre)
+{
+    $letras = '';
+
+    foreach (preg_split('/\s+/u', trim($nombre)) as $palabra) {
+        if ($palabra !== '' && mb_strlen_seguro($letras) < 2) {
+            $letras .= function_exists('mb_substr') ? mb_strtoupper(mb_substr($palabra, 0, 1)) : strtoupper($palabra[0]);
+        }
+    }
+
+    return $letras;
 }
