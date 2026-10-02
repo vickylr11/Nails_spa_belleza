@@ -1,6 +1,26 @@
+
 <?php
 
+session_start();
+
+date_default_timezone_set('America/Bogota');
+
 require_once "../conexion/conexion.php";
+
+
+// ==========================================
+// FUNCION PARA REDIRECCIONAR CON MENSAJE
+// ==========================================
+
+function regresarReserva($mensaje) {
+
+    header(
+        "Location: ../paginas/reservar.php?error=" .
+        urlencode($mensaje)
+    );
+
+    exit;
+}
 
 
 // ==========================================
@@ -8,6 +28,7 @@ require_once "../conexion/conexion.php";
 // ==========================================
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+
     header("Location: ../paginas/reservar.php");
     exit;
 }
@@ -20,13 +41,19 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $nombre = trim($_POST['nombre'] ?? '');
 $telefono = trim($_POST['telefono'] ?? '');
 $correo = trim($_POST['correo'] ?? '');
+
 $id_servicio = intval($_POST['id_servicio'] ?? 0);
-$fecha = $_POST['fecha'] ?? '';
-$hora = $_POST['hora'] ?? '';
-$manicurista = trim($_POST['manicurista'] ?? '');
+
+$fecha = trim($_POST['fecha'] ?? '');
+$hora = trim($_POST['hora'] ?? '');
+
+$id_manicurista = intval($_SESSION['id_manicurista'] ?? 0);
+
+$manicurista = '';
+
 
 // ==========================================
-// VALIDAR DATOS
+// VALIDAR CAMPOS
 // ==========================================
 
 if (
@@ -35,69 +62,111 @@ if (
     $id_servicio <= 0 ||
     $fecha === '' ||
     $hora === '' ||
-    $manicurista === ''
+    $id_manicurista <= 0
 ) {
-    header(
-        "Location: ../paginas/reservar.php?error=" .
-        urlencode("Completa todos los campos obligatorios.")
+
+    regresarReserva(
+        "Completa todos los campos obligatorios."
     );
-    exit;
 }
 
 
 // ==========================================
-// VALIDAR FECHA Y HORA
+// VALIDAR FORMATO DE FECHA
 // ==========================================
 
-$fechaActual = date('Y-m-d');
-$horaActual = date('H:i:s');
-
-if ($fecha < $fechaActual) {
-
-    header(
-        "Location: ../paginas/reservar.php?error=" .
-        urlencode("No puedes reservar una fecha pasada.")
-    );
-
-    exit;
-}
-
-
-// ==========================================
-// NO PERMITIR HORAS PASADAS HOY
-// ==========================================
+$fechaObjeto = DateTime::createFromFormat(
+    '!Y-m-d',
+    $fecha
+);
 
 if (
-    $fecha === $fechaActual &&
-    $hora <= $horaActual
+    !$fechaObjeto ||
+    $fechaObjeto->format('Y-m-d') !== $fecha
 ) {
 
-    header(
-        "Location: ../paginas/reservar.php?error=" .
-        urlencode("Esa hora ya pasó. Selecciona otra hora.")
-    );
-
-    exit;
+    regresarReserva("La fecha seleccionada no es válida.");
 }
 
 
 // ==========================================
-// DESCANSO DE 12:00 PM A 1:00 PM
+// VALIDAR FORMATO DE HORA
+// ==========================================
+
+// Aceptar tanto 14:00 como 14:00:00
+
+if (preg_match('/^\d{2}:\d{2}$/', $hora)) {
+    $hora .= ':00';
+}
+
+$horaObjeto = DateTime::createFromFormat(
+    '!H:i:s',
+    $hora
+);
+
+if (
+    !$horaObjeto ||
+    $horaObjeto->format('H:i:s') !== $hora
+) {
+
+    regresarReserva("La hora seleccionada no es válida.");
+}
+
+
+// ==========================================
+// VALIDAR FECHA Y HORA ACTUAL
+// ==========================================
+
+$ahora = new DateTime('now');
+
+$fechaHoraReserva = DateTime::createFromFormat(
+    '!Y-m-d H:i:s',
+    $fecha . ' ' . $hora
+);
+
+if (!$fechaHoraReserva) {
+
+    regresarReserva("No se pudo validar la fecha y hora.");
+}
+
+
+// No permitir fechas pasadas
+
+if ($fechaObjeto < new DateTime('today')) {
+
+    regresarReserva(
+        "No puedes reservar una fecha pasada."
+    );
+}
+
+
+// No permitir horas pasadas únicamente si es hoy
+
+if (
+    $fecha === $ahora->format('Y-m-d') &&
+    $fechaHoraReserva <= $ahora
+) {
+
+    regresarReserva(
+        "Esa hora ya pasó. Selecciona otra hora disponible."
+    );
+}
+
+
+// ==========================================
+// VALIDAR DESCANSO
 // ==========================================
 
 if ($hora === '12:00:00') {
 
-    header(
-        "Location: ../paginas/reservar.php?error=" .
-        urlencode("De 12:00 PM a 1:00 PM es horario de descanso.")
+    regresarReserva(
+        "De 12:00 PM a 1:00 PM es horario de descanso."
     );
-
-    exit;
 }
 
 
 // ==========================================
-// COMPROBAR QUE EL SERVICIO EXISTE
+// COMPROBAR SERVICIO ACTIVO
 // ==========================================
 
 $stmt = $conexion->prepare("
@@ -107,199 +176,320 @@ $stmt = $conexion->prepare("
     AND activo = 1
 ");
 
-if (!$stmt) {
-    die("Error SQL al buscar el servicio: " . $conexion->error);
-}
-
 $stmt->bind_param("i", $id_servicio);
+
 $stmt->execute();
 
 $resultado = $stmt->get_result();
 
 if ($resultado->num_rows === 0) {
-    die("El servicio seleccionado no existe o está inactivo.");
+
+    $stmt->close();
+
+    regresarReserva(
+        "El servicio seleccionado no existe o está inactivo."
+    );
 }
 
 $stmt->close();
 
 
+
 // ==========================================
-// COMPROBAR HORARIO DISPONIBLE
+// COMPROBAR MANICURISTA ACTIVA
 // ==========================================
 
 $stmt = $conexion->prepare("
+    SELECT nombre
+    FROM manicuristas
+    WHERE id_manicurista = ?
+    AND estado = 1
+");
+
+$stmt->bind_param("i", $id_manicurista);
+
+$stmt->execute();
+
+$resultado = $stmt->get_result();
+
+if ($resultado->num_rows === 0) {
+
+    $stmt->close();
+
+    regresarReserva(
+        "La manicurista seleccionada no está disponible."
+    );
+}
+
+$datosManicurista = $resultado->fetch_assoc();
+
+$manicurista = trim($datosManicurista['nombre']);
+
+$stmt->close();
+
+// ==========================================
+// BLOQUEAR TEMPORALMENTE EL HORARIO
+// ==========================================
+
+// Esto evita que dos clientas intenten guardar
+// simultáneamente la misma hora con la misma
+// manicurista.
+
+$identificadorBloqueo =
+    $manicurista . '|' . $fecha . '|' . $hora;
+
+$nombreBloqueo =
+    'reserva_' . substr(
+        hash('sha256', $identificadorBloqueo),
+        0,
+        55
+    );
+
+$bloqueoAdquirido = false;
+
+$transaccionIniciada = false;
+
+
+try {
+
+    // ==========================================
+    // ADQUIRIR BLOQUEO DEL HORARIO
+    // ==========================================
+
+    $stmt = $conexion->prepare("
+        SELECT GET_LOCK(?, 10)
+    ");
+
+    $stmt->bind_param("s", $nombreBloqueo);
+
+    $stmt->execute();
+
+    $stmt->bind_result($resultadoBloqueo);
+
+    $stmt->fetch();
+
+    $stmt->close();
+
+
+    if ((int)$resultadoBloqueo !== 1) {
+
+        regresarReserva(
+            "No se pudo verificar el horario. Intenta nuevamente."
+        );
+    }
+
+    $bloqueoAdquirido = true;
+
+
+    // ==========================================
+    // INICIAR TRANSACCION
+    // ==========================================
+
+    $conexion->begin_transaction();
+
+    $transaccionIniciada = true;
+
+
+    // ==========================================
+    // COMPROBAR SI YA ESTA OCUPADO
+    // ==========================================
+
+   $stmt = $conexion->prepare("
     SELECT id_reserva
     FROM reservas
     WHERE fecha = ?
     AND hora = ?
-    AND manicurista = ?
-    AND estado != 'Cancelada'
+    AND TRIM(manicurista) = ?
+    AND LOWER(TRIM(estado)) NOT IN (
+        'cancelada',
+        'cancelado'
+    )
+    LIMIT 1
 ");
 
-if (!$stmt) {
-    die("Error SQL al comprobar el horario: " . $conexion->error);
-}
-
-$stmt->bind_param(
-    "sss",
-    $fecha,
-    $hora,
-    $manicurista
-);
-
-$stmt->execute();
-
-$resultado = $stmt->get_result();
-
-if ($resultado->num_rows > 0) {
-    header(
-        "Location: ../paginas/reservar.php?error=" .
-        urlencode("Ese horario ya está ocupado.")
-    );
-    exit;
-}
-
-$stmt->close();
-
-
-// ==========================================
-// BUSCAR CLIENTE POR TELÉFONO
-// ==========================================
-
-$stmt = $conexion->prepare("
-    SELECT id_cliente
-    FROM clientes
-    WHERE telefono = ?
-");
-
-if (!$stmt) {
-    die("Error SQL al buscar el cliente: " . $conexion->error);
-}
-
-$stmt->bind_param("s", $telefono);
-$stmt->execute();
-
-$resultado = $stmt->get_result();
-
-
-// ==========================================
-// CLIENTE EXISTENTE
-// ==========================================
-
-if ($resultado->num_rows > 0) {
-
-    $cliente = $resultado->fetch_assoc();
-
-    $id_cliente = intval($cliente['id_cliente']);
-
-    $stmt->close();
-
-
-    // Actualizar datos del cliente
-
-    $actualizar = $conexion->prepare("
-        UPDATE clientes
-        SET nombre = ?, correo = ?
-        WHERE id_cliente = ?
-    ");
-
-    if (!$actualizar) {
-        die("Error SQL al actualizar cliente: " . $conexion->error);
-    }
-
-    $actualizar->bind_param(
-        "ssi",
-        $nombre,
-        $correo,
-        $id_cliente
-    );
-
-    if (!$actualizar->execute()) {
-        die(
-            "Error al actualizar el cliente: " .
-            $actualizar->error
-        );
-    }
-
-    $actualizar->close();
-
-
-// ==========================================
-// CLIENTE NUEVO
-// ==========================================
-
-} else {
-
-    $stmt->close();
-
-    $insertar = $conexion->prepare("
-        INSERT INTO clientes
-        (nombre, telefono, correo)
-        VALUES (?, ?, ?)
-    ");
-
-    if (!$insertar) {
-        die("Error SQL al crear cliente: " . $conexion->error);
-    }
-
-    $insertar->bind_param(
+    $stmt->bind_param(
         "sss",
-        $nombre,
-        $telefono,
-        $correo
+        $fecha,
+        $hora,
+        $manicurista
     );
 
-    if (!$insertar->execute()) {
-        die(
-            "Error al crear el cliente: " .
-            $insertar->error
+    $stmt->execute();
+
+    $resultado = $stmt->get_result();
+
+    if ($resultado->num_rows > 0) {
+
+        $stmt->close();
+
+        $conexion->rollback();
+
+        $transaccionIniciada = false;
+
+        regresarReserva(
+            "Ese horario ya está ocupado para esta manicurista. Selecciona otro horario o una profesional diferente."
         );
     }
 
-    $id_cliente = $conexion->insert_id;
-
-    $insertar->close();
-}
+    $stmt->close();
 
 
-// ==========================================
-// GUARDAR RESERVA
-// ==========================================
+    // ==========================================
+    // BUSCAR CLIENTE POR TELEFONO
+    // ==========================================
 
-$insertar_reserva = $conexion->prepare("
-    INSERT INTO reservas
-    (id_cliente, id_servicio, fecha, hora, estado, manicurista)
-    VALUES (?, ?, ?, ?, 'Pendiente', ?)
-");
+    $stmt = $conexion->prepare("
+        SELECT id_cliente
+        FROM clientes
+        WHERE telefono = ?
+        LIMIT 1
+    ");
 
-if (!$insertar_reserva) {
-    die(
-        "ERROR AL PREPARAR LA RESERVA: " .
-        $conexion->error
+    $stmt->bind_param("s", $telefono);
+
+    $stmt->execute();
+
+    $resultado = $stmt->get_result();
+
+
+    // ==========================================
+    // CLIENTE EXISTENTE
+    // ==========================================
+
+    if ($resultado->num_rows > 0) {
+
+        $cliente = $resultado->fetch_assoc();
+
+        $id_cliente = intval($cliente['id_cliente']);
+
+        $stmt->close();
+
+
+        $actualizar = $conexion->prepare("
+            UPDATE clientes
+            SET nombre = ?, correo = ?
+            WHERE id_cliente = ?
+        ");
+
+        $actualizar->bind_param(
+            "ssi",
+            $nombre,
+            $correo,
+            $id_cliente
+        );
+
+        $actualizar->execute();
+
+        $actualizar->close();
+
+
+    } else {
+
+        // ======================================
+        // CLIENTE NUEVO
+        // ======================================
+
+        $stmt->close();
+
+        $insertar = $conexion->prepare("
+            INSERT INTO clientes
+            (nombre, telefono, correo)
+            VALUES (?, ?, ?)
+        ");
+
+        $insertar->bind_param(
+            "sss",
+            $nombre,
+            $telefono,
+            $correo
+        );
+
+        $insertar->execute();
+
+        $id_cliente = $conexion->insert_id;
+
+        $insertar->close();
+    }
+
+
+    // ==========================================
+    // GUARDAR RESERVA
+    // ==========================================
+
+    $insertar_reserva = $conexion->prepare("
+        INSERT INTO reservas
+        (
+            id_cliente,
+            id_servicio,
+            fecha,
+            hora,
+            estado,
+            manicurista
+        )
+        VALUES (?, ?, ?, ?, 'Pendiente', ?)
+    ");
+
+    $insertar_reserva->bind_param(
+        "iisss",
+        $id_cliente,
+        $id_servicio,
+        $fecha,
+        $hora,
+        $manicurista
     );
-}
 
-$insertar_reserva->bind_param(
-    "iisss",
-    $id_cliente,
-    $id_servicio,
-    $fecha,
-    $hora,
-    $manicurista
-);
+    $insertar_reserva->execute();
 
-if (!$insertar_reserva->execute()) {
-    die(
-        "ERROR AL GUARDAR LA RESERVA: " .
-        $insertar_reserva->error
+    $insertar_reserva->close();
+
+
+    // ==========================================
+    // CONFIRMAR TRANSACCION
+    // ==========================================
+
+    $conexion->commit();
+
+    $transaccionIniciada = false;
+
+
+} catch (Throwable $e) {
+
+    if ($transaccionIniciada) {
+        $conexion->rollback();
+    }
+
+    error_log(
+        "Error al guardar reserva: " . $e->getMessage()
     );
-}
 
-$insertar_reserva->close();
+    regresarReserva(
+        "Ocurrió un error al guardar la reserva. Intenta nuevamente."
+    );
+
+
+} finally {
+
+    // ==========================================
+    // LIBERAR BLOQUEO
+    // ==========================================
+
+    if ($bloqueoAdquirido) {
+
+        $stmt = $conexion->prepare("
+            SELECT RELEASE_LOCK(?)
+        ");
+
+        $stmt->bind_param("s", $nombreBloqueo);
+
+        $stmt->execute();
+
+        $stmt->close();
+    }
+}
 
 
 // ==========================================
-// TODO CORRECTO
+// RESERVA CORRECTAMENTE GUARDADA
 // ==========================================
 
 header(

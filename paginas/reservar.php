@@ -1,4 +1,6 @@
+
 <?php
+
 session_start();
 
 require_once "../conexion/conexion.php";
@@ -9,52 +11,112 @@ $servicio_seleccionado = isset($_GET['servicio'])
     ? intval($_GET['servicio'])
     : 0;
 
-/* Manicurista seleccionada en la página anterior */
+
+/* ==========================================
+   MANICURISTA SELECCIONADA
+========================================== */
+
 $id_manicurista = $_SESSION['id_manicurista'] ?? 0;
 
 $manicurista_seleccionada = null;
 
 if ($id_manicurista > 0) {
+
     $stmt = $conexion->prepare("
         SELECT id_manicurista, nombre
         FROM manicuristas
-        WHERE id_manicurista = ? AND estado = 1
+        WHERE id_manicurista = ?
+        AND estado = 1
     ");
 
     $stmt->bind_param("i", $id_manicurista);
     $stmt->execute();
 
-    $manicurista_seleccionada = $stmt->get_result()->fetch_assoc();
+    $manicurista_seleccionada = $stmt
+        ->get_result()
+        ->fetch_assoc();
+
+    $stmt->close();
 }
 
-/* Horarios de atención configurados por administración */
+
+/* ==========================================
+   CONSULTAR RESERVAS OCUPADAS
+   SOLO DE LA MANICURISTA SELECCIONADA
+========================================== */
+
+$reservas_ocupadas = [];
+
+if ($manicurista_seleccionada) {
+
+    $nombreManicurista = $manicurista_seleccionada['nombre'];
+
+    $sqlOcupadas = "
+        SELECT
+            DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha_reserva,
+            TIME_FORMAT(hora, '%H:%i') AS hora_reserva
+        FROM reservas
+        WHERE TRIM(manicurista) = TRIM(?)
+          AND fecha >= CURDATE()
+          AND (
+              estado IS NULL
+              OR LOWER(TRIM(estado)) NOT IN ('cancelada', 'cancelado')
+          )
+    ";
+
+    $stmtOcupadas = $conexion->prepare($sqlOcupadas);
+
+    $stmtOcupadas->bind_param("s", $nombreManicurista);
+
+    $stmtOcupadas->execute();
+
+    $resultadoOcupadas = $stmtOcupadas->get_result();
+
+    while ($fila = $resultadoOcupadas->fetch_assoc()) {
+
+        $fechaReserva = $fila['fecha_reserva'];
+        $horaReserva = $fila['hora_reserva'];
+
+        $reservas_ocupadas[$fechaReserva][] = $horaReserva;
+    }
+
+    $stmtOcupadas->close();
+}
+
+
+/* ==========================================
+   HORARIOS DE ATENCION
+========================================== */
+
 $horarios_resultado = $conexion->query("
-    SELECT dia, hora_apertura, hora_cierre, disponible
+    SELECT
+        dia,
+        hora_apertura,
+        hora_cierre,
+        disponible
     FROM horarios
 ");
 
 $horarios_semana = [];
 
 while ($fila = $horarios_resultado->fetch_assoc()) {
+
     $horarios_semana[$fila['dia']] = [
+
         'apertura' => $fila['hora_apertura'],
+
         'cierre' => $fila['hora_cierre'],
+
         'disponible' => (int)$fila['disponible']
+
     ];
+
 }
 
-require_once "../includes/header.php";
-?>
 
-<?php
-
-require_once "../conexion/conexion.php";
-
-$titulo = "Reservar cita - Nails Spa Belleza";
-
-$servicio_seleccionado = isset($_GET['servicio'])
-    ? intval($_GET['servicio'])
-    : 0;
+/* ==========================================
+   CARGAR ENCABEZADO
+========================================== */
 
 require_once "../includes/header.php";
 
@@ -129,16 +191,7 @@ require_once "../includes/header.php";
             </div>
 
 
-            <div class="campo-reserva">
-                <label>
-                    Correo electrónico
-                </label>
-
-                <input
-                    type="email"
-                    name="correo"
-                    placeholder="correo@ejemplo.com">
-            </div>
+           
 
 
             <div class="campo-reserva">
@@ -194,9 +247,6 @@ require_once "../includes/header.php";
 
             <div class="campo-reserva">
 
-                <label>
-                    Manicurista
-                </label>
 
                 <div class="campo-reserva">
                     <label>Manicurista</label>
@@ -312,9 +362,17 @@ require_once "../includes/header.php";
 
 </section>
 
+
 <script>
+
 const horariosSemana = <?= json_encode(
     $horarios_semana,
+    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+) ?>;
+
+// Reservas existentes de la manicurista seleccionada
+const reservasOcupadas = <?= json_encode(
+    $reservas_ocupadas,
     JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
 ) ?>;
 
@@ -333,27 +391,40 @@ const nombresDias = [
 ];
 
 function actualizarHoras() {
+
     const fechaSeleccionada = fechaInput.value;
 
     horaSelect.innerHTML = "";
     horaSelect.disabled = true;
 
     if (!fechaSeleccionada) {
+
         horaSelect.innerHTML =
             '<option value="">Primero selecciona una fecha</option>';
+
+        mensajeHorario.textContent =
+            "Selecciona un día para consultar los horarios disponibles.";
+
         return;
     }
 
-    const [anio, mes, dia] = fechaSeleccionada.split("-").map(Number);
+    const [anio, mes, dia] =
+        fechaSeleccionada.split("-").map(Number);
+
     const fecha = new Date(anio, mes - 1, dia);
 
     const nombreDia = nombresDias[fecha.getDay()];
+
     const horario = horariosSemana[nombreDia];
 
     if (!horario || horario.disponible !== 1) {
+
         horaSelect.innerHTML =
             '<option value="">No hay atención este día</option>';
-        mensajeHorario.textContent = "Selecciona otro día.";
+
+        mensajeHorario.textContent =
+            "Selecciona otro día.";
+
         return;
     }
 
@@ -371,24 +442,37 @@ function actualizarHoras() {
         horario.cierre.split(":").map(Number);
 
     let inicio = horaApertura * 60 + minutoApertura;
+
     const cierre = horaCierre * 60 + minutoCierre;
 
     if (esHoy) {
+
         const minutosActuales =
             ahora.getHours() * 60 + ahora.getMinutes();
 
         if (minutosActuales > inicio) {
+
             inicio = Math.ceil(minutosActuales / 60) * 60;
+
         }
     }
 
-    let cantidad = 0;
+    // Horarios ocupados en la fecha seleccionada
+    const ocupadas = reservasOcupadas[fechaSeleccionada] || [];
 
-    for (let minutos = inicio; minutos + 60 <= cierre; minutos += 60) {
+    let disponibles = 0;
+    let ocupadasEncontradas = 0;
+
+    for (
+        let minutos = inicio;
+        minutos + 60 <= cierre;
+        minutos += 60
+    ) {
+
         const hora = Math.floor(minutos / 60);
         const minuto = minutos % 60;
 
-        // Descanso de 12:00 p. m. a 1:00 p. m.
+        // Descanso de 12:00 PM a 1:00 PM
         if (minutos >= 720 && minutos < 780) {
             continue;
         }
@@ -398,39 +482,79 @@ function actualizarHoras() {
             String(minuto).padStart(2, "0") + ":00";
 
         const hora12 = hora % 12 || 12;
+
         const periodo = hora < 12 ? "AM" : "PM";
 
         const texto =
             String(hora12).padStart(2, "0") + ":" +
-            String(minuto).padStart(2, "0") + " " + periodo;
+            String(minuto).padStart(2, "0") + " " +
+            periodo;
+
+        // Comprobar si esta hora ya tiene reserva
+        const estaOcupada = ocupadas.some(function(horaOcupada) {
+
+            return horaOcupada.substring(0, 5) === valor.substring(0, 5);
+
+        });
 
         const opcion = document.createElement("option");
+
         opcion.value = valor;
-        opcion.textContent = texto;
+
+        if (estaOcupada) {
+
+            opcion.textContent = texto + " — OCUPADO";
+
+            opcion.disabled = true;
+
+            opcion.style.color = "#999";
+
+            ocupadasEncontradas++;
+
+        } else {
+
+            opcion.textContent = texto + " — Disponible";
+
+            disponibles++;
+
+        }
 
         horaSelect.appendChild(opcion);
-        cantidad++;
     }
 
-    if (cantidad === 0) {
-        horaSelect.innerHTML =
-            '<option value="">No quedan horarios disponibles</option>';
-        mensajeHorario.textContent = "Elige otra fecha.";
+    if (disponibles === 0) {
+
+        horaSelect.insertAdjacentHTML(
+            "afterbegin",
+            '<option value="">No hay horarios disponibles</option>'
+        );
+
+        mensajeHorario.textContent =
+            "Todos los horarios de esta fecha están ocupados. Selecciona otro día.";
+
     } else {
-        horaSelect.disabled = false;
+
         horaSelect.insertAdjacentHTML(
             "afterbegin",
             '<option value="">Selecciona una hora</option>'
         );
 
+        horaSelect.disabled = false;
+
         mensajeHorario.textContent =
-            "Horarios según la jornada de atención.";
+            disponibles + " horarios disponibles. " +
+            ocupadasEncontradas + " horarios ocupados.";
+
     }
+
 }
 
 fechaInput.addEventListener("change", actualizarHoras);
-</script>
 
+// Ejecutar al cargar la página
+actualizarHoras();
+
+</script>
 <?php
 
 require_once "../includes/footer.php";

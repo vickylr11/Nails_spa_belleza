@@ -1,17 +1,21 @@
+
 <?php
 session_start();
 
 require_once "../conexion/conexion.php";
 
+// Obtener manicuristas activas
 $sql = "SELECT * FROM manicuristas WHERE estado = 1";
 $resultado = $conexion->query($sql);
 
+// Procesar selección de manicurista
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     $id_manicurista = intval($_POST["id_manicurista"]);
 
     $stmt = $conexion->prepare(
-        "SELECT id_manicurista FROM manicuristas
+        "SELECT id_manicurista
+         FROM manicuristas
          WHERE id_manicurista = ? AND estado = 1"
     );
 
@@ -27,6 +31,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         header("Location: reservar.php");
         exit();
     }
+
+    $stmt->close();
 }
 ?>
 
@@ -40,10 +46,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <title>Elige tu manicurista | Nails Spa Belleza</title>
 
     <link rel="stylesheet" href="../css/estilo.css">
-<link rel="stylesheet" href="../css/manicurista.css">
+    <link rel="stylesheet" href="../css/manicurista.css">
 </head>
 
 <body>
+
+    <!-- BARRA DE NAVEGACION -->
 
     <header class="navbar">
 
@@ -63,12 +71,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </header>
 
 
+    <!-- CONTENIDO PRINCIPAL -->
+
     <main class="contenedor-manicuristas">
 
-       
-
-        </div>
-
+        <!-- TITULO -->
 
         <div class="titulo-manicuristas">
 
@@ -81,32 +88,50 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         </div>
 
 
+        <!-- TARJETAS DE MANICURISTAS -->
+
         <div class="grid-manicuristas">
 
             <?php while ($manicurista = $resultado->fetch_assoc()): ?>
 
                 <form method="POST" class="form-manicurista">
 
+                    <!-- ID DE LA MANICURISTA -->
+
                     <input
                         type="hidden"
                         name="id_manicurista"
-                        value="<?= $manicurista['id_manicurista'] ?>">
+                        value="<?= htmlspecialchars($manicurista['id_manicurista']) ?>"
+                    >
 
-                    <button type="submit" class="tarjeta-manicurista">
+                    <!-- TARJETA COMPLETA -->
 
+                    <button
+                        type="submit"
+                        class="tarjeta-manicurista"
+                    >
+
+                        <!-- FOTOGRAFIA -->
 
                         <img
                             src="../img/ft_manicuristas/<?= htmlspecialchars($manicurista['foto']) ?>"
                             alt="<?= htmlspecialchars($manicurista['nombre']) ?>"
-                            class="foto-manicurista">
+                            class="foto-manicurista"
+                        >
+
+                        <!-- NOMBRE DESDE MYSQL -->
 
                         <h3>
                             <?= htmlspecialchars($manicurista['nombre']) ?>
                         </h3>
 
+                        <!-- DISPONIBILIDAD -->
+
                         <span class="disponible">
                             Disponible
                         </span>
+
+                        <!-- BOTON -->
 
                         <span class="boton-seleccionar">
                             Agendar con esta manicurista

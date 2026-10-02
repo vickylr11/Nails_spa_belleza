@@ -168,7 +168,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         }
 
-
         // ======================================
         // CONSULTAR HORARIOS OCUPADOS
         // ======================================
@@ -176,188 +175,159 @@ document.addEventListener("DOMContentLoaded", function () {
         if (manicuristaSeleccionada === "") {
             return;
         }
-
-
         fetch(
             "../acciones/horarios.ocupados.php" +
             "?fecha=" +
             encodeURIComponent(fechaSeleccionada) +
             "&manicurista=" +
-            encodeURIComponent(
-                manicuristaSeleccionada
-            )
+            encodeURIComponent(manicuristaSeleccionada)
         )
-        .then(function (respuesta) {
+            .then(function (respuesta) {
+                if (!respuesta.ok) {
+                    throw new Error("Error al consultar horarios.");
+                }
 
-            if (!respuesta.ok) {
-                throw new Error(
-                    "Error al consultar horarios."
-                );
-            }
+                return respuesta.json();
+            })
+            .then(function (datos) {
 
-            return respuesta.json();
+                console.log("Respuesta horarios ocupados:", datos);
 
-        })
-        .then(function (horariosOcupados) {
+                const horariosOcupados = Array.isArray(datos)
+                    ? datos
+                    : (Array.isArray(datos.ocupados) ? datos.ocupados : []);
 
-            const ocupados =
-                horariosOcupados.map(function (hora) {
-
-                    return hora.substring(0, 8);
-
+                const ocupados = horariosOcupados.map(function (horaOcupada) {
+                    return String(horaOcupada).substring(0, 5);
                 });
 
+                hora.querySelectorAll("option").forEach(function (opcion) {
 
-            hora.querySelectorAll(
-                "option:not(:first-child)"
-            ).forEach(function (opcion) {
+                    if (opcion.value === "" || opcion.value === "12:00:00") {
+                        return;
+                    }
+
+                    if (!opcion.dataset.textoOriginal) {
+                        opcion.dataset.textoOriginal = opcion.textContent.trim();
+                    }
+
+                    const horaOpcion = String(opcion.value).substring(0, 5);
+
+                    if (ocupados.includes(horaOpcion)) {
+                        opcion.disabled = true;
+                        opcion.textContent =
+                            opcion.dataset.textoOriginal + " — OCUPADO";
+                    }
+                });
 
                 if (
-                    opcion.value === "12:00:00"
+                    hora.selectedIndex >= 0 &&
+                    hora.options[hora.selectedIndex].disabled
                 ) {
-                    return;
+                    hora.value = "";
                 }
 
-
-                if (!opcion.dataset.textoOriginal) {
-
-                    opcion.dataset.textoOriginal =
-                        opcion.textContent.trim();
-
-                }
-
-
-                if (
-                    ocupados.includes(
-                        opcion.value
-                    )
-                ) {
-
-                    opcion.disabled = true;
-
-                    opcion.textContent =
-                        opcion.dataset.textoOriginal +
-                        " — OCUPADO";
-
-                }
-
+            })
+            .catch(function (error) {
+                console.error("Error al consultar horarios:", error);
             });
 
 
-            // ==================================
-            // QUITAR SELECCIÓN SI YA NO ES VÁLIDA
-            // ==================================
 
-            if (
-                hora.value !== "" &&
-                hora.options[
-                    hora.selectedIndex
-                ].disabled
-            ) {
+        // ==========================================
+        // CAMBIO DE FECHA
+        // ==========================================
 
-                hora.value = "";
-            }
+        if (fecha) {
 
-        })
-        .catch(function (error) {
-
-            console.error(
-                "Error al consultar horarios:",
-                error
+            fecha.addEventListener(
+                "change",
+                comprobarHorarios
             );
 
-        });
-
-    }
+        }
 
 
-    // ==========================================
-    // CAMBIO DE FECHA
-    // ==========================================
+        // ==========================================
+        // CAMBIO DE MANICURISTA
+        // ==========================================
 
-    if (fecha) {
+        if (manicurista) {
 
-        fecha.addEventListener(
-            "change",
-            comprobarHorarios
-        );
+            manicurista.addEventListener(
+                "change",
+                comprobarHorarios
+            );
 
-    }
-
-
-    // ==========================================
-    // CAMBIO DE MANICURISTA
-    // ==========================================
-
-    if (manicurista) {
-
-        manicurista.addEventListener(
-            "change",
-            comprobarHorarios
-        );
-
-    }
+        }
 
 
-    // ==========================================
-    // VALIDAR FORMULARIO
-    // ==========================================
+        // ==========================================
+        // VALIDAR FORMULARIO
+        // ==========================================
 
-    const formulario =
-        document.getElementById("formReserva");
+        const formulario =
+            document.getElementById("formReserva");
 
-    if (formulario) {
+        if (formulario) {
 
-        formulario.addEventListener(
-            "submit",
-            function (evento) {
+            formulario.addEventListener(
+                "submit",
+                function (evento) {
 
-                const nombre =
-                    document.querySelector(
-                        '[name="nombre"]'
-                    ).value.trim();
+                    const nombre =
+                        document.querySelector(
+                            '[name="nombre"]'
+                        ).value.trim();
 
-                const telefono =
-                    document.querySelector(
-                        '[name="telefono"]'
-                    ).value.trim();
+                    const telefono =
+                        document.querySelector(
+                            '[name="telefono"]'
+                        ).value.trim();
 
 
-                if (nombre.length < 3) {
+                    if (nombre.length < 3) {
 
-                    alert(
-                        "Escribe un nombre válido."
-                    );
+                        alert(
+                            "Escribe un nombre válido."
+                        );
 
-                    evento.preventDefault();
+                        evento.preventDefault();
 
-                    return;
+                        return;
+                    }
+
+
+                    if (telefono.length < 7) {
+
+                        alert(
+                            "Escribe un número de teléfono válido."
+                        );
+
+                        evento.preventDefault();
+
+                        return;
+                    }
+
                 }
+            );
 
-
-                if (telefono.length < 7) {
-
-                    alert(
-                        "Escribe un número de teléfono válido."
-                    );
-
-                    evento.preventDefault();
-
-                    return;
-                }
-
-            }
-        );
-
+        }
     }
 
-});
 
 
-function confirmarCancelacion() {
 
-    return confirm(
-        "¿Seguro que deseas cancelar esta reserva?"
-    );
+        function confirmarCancelacion() {
 
-}
+            return confirm(
+                "¿Seguro que deseas cancelar esta reserva?"
+            );
+
+        }
+
+
+    
+
+
+
