@@ -1,0 +1,5 @@
+# Aquí solo hay fotos subidas desde el panel.
+# Si alguien lograra subir un programa, no se podría ejecutar.
+<FilesMatch "\.(php|phtml|phar|php\d)$">
+    Require all denied
+</FilesMatch>

@@ -1,0 +1,3 @@
+# Nadie puede abrir esta carpeta desde el navegador.
+# PHP sí puede usar sus archivos con require_once.
+Require all denied
