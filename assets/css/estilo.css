@@ -1,0 +1,2050 @@
+/* ==========================================================
+   NAILS SPA BELLEZA — HOJA DE ESTILOS
+   ----------------------------------------------------------
+   Orden del archivo (búsquenlo con Ctrl+F por el número):
+     1. Colores y medidas (variables)
+     2. Base
+     3. Botones
+     4. Menú de arriba y barra del personal
+     5. Portada (hero) y estadísticas
+     6. Secciones, servicios y pasos
+     7. Encabezado de las páginas internas
+     8. Formularios y mensajes
+     9. Página de reservar
+    10. Tablas y estados
+    11. Agenda (panel)
+    12. Páginas del administrador
+    13. Pie de página
+    14. Celular y tablet
+   Regla: cada clase se define UNA sola vez. Si algo se ve mal,
+   se corrige donde está, no se agrega otra regla al final.
+   ========================================================== */
+
+
+/* ==========================================================
+   1. COLORES Y MEDIDAS
+   Cambiando un valor aquí, cambia en toda la página.
+   ========================================================== */
+
+:root {
+    --vino: #a71958;
+    --vino-oscuro: #76103f;
+    --rosa: #f7d9e7;
+    --rosa-medio: #edb4cc;
+    --rosa-claro: #fff7fb;
+    --crema: #fbf3ea;
+    --morado: #29121f;
+
+    --texto: #3a2a33;
+    --gris: #7a6b73;
+    --borde: #eedde5;
+    --blanco: #ffffff;
+
+    --verde: #168b4a;
+    --amarillo: #b07800;
+    --rojo: #c73545;
+
+    --letra-titulos: "Playfair Display", Georgia, serif;
+    --letra: "Poppins", "Segoe UI", Arial, sans-serif;
+
+    --radio: 16px;
+    --radio-chico: 10px;
+    --sombra: 0 10px 30px rgba(90, 20, 55, .08);
+    --sombra-suave: 0 4px 14px rgba(90, 20, 55, .06);
+
+    --ancho: 1180px;
+}
+
+
+/* ==========================================================
+   2. BASE
+   ========================================================== */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--letra);
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--texto);
+    background: var(--rosa-claro);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+h1,
+h2,
+h3 {
+    color: var(--morado);
+    line-height: 1.2;
+}
+
+h1,
+h2 {
+    font-family: var(--letra-titulos);
+    font-weight: 700;
+}
+
+a {
+    color: var(--vino);
+}
+
+img {
+    max-width: 100%;
+    display: block;
+}
+
+/* Lo que tiene el atributo hidden no se ve, aunque otra regla le ponga display */
+[hidden] {
+    display: none !important;
+}
+
+small {
+    color: var(--gris);
+}
+
+
+/* ==========================================================
+   3. BOTONES
+   ========================================================== */
+
+.btn-principal,
+.btn-secundario,
+.btn-card,
+.btn-pequeno,
+.btn-reserva,
+.btn-whatsapp {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: background .2s, transform .2s, box-shadow .2s;
+}
+
+/* Botón principal (vino) */
+.btn-principal {
+    background: var(--vino);
+    color: var(--blanco);
+    padding: 13px 28px;
+    border-radius: 30px;
+    font-size: 15px;
+    box-shadow: 0 6px 18px rgba(167, 25, 88, .25);
+}
+
+.btn-principal:hover {
+    background: var(--vino-oscuro);
+    transform: translateY(-2px);
+}
+
+/* Botón secundario (borde, sin relleno) */
+.btn-secundario {
+    background: transparent;
+    color: var(--vino);
+    padding: 12px 24px;
+    border: 2px solid var(--vino);
+    border-radius: 30px;
+    font-size: 15px;
+}
+
+.btn-secundario:hover {
+    background: var(--vino);
+    color: var(--blanco);
+}
+
+/* Botón a lo ancho del formulario */
+.btn-completo {
+    width: 100%;
+}
+
+/* Botón de la tarjeta de servicio */
+.btn-card {
+    width: 100%;
+    background: var(--vino);
+    color: var(--blanco);
+    padding: 11px;
+    border-radius: 25px;
+    font-size: 14px;
+}
+
+.btn-card:hover {
+    background: var(--vino-oscuro);
+}
+
+/* Botón chico de las tablas del panel */
+.btn-pequeno {
+    background: var(--vino);
+    color: var(--blanco);
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.btn-pequeno:hover {
+    background: var(--vino-oscuro);
+}
+
+/* Botón "+ Nueva cita" del menú */
+.btn-reserva {
+    background: var(--vino);
+    color: var(--blanco);
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.btn-reserva:hover {
+    background: var(--vino-oscuro);
+    box-shadow: 0 5px 15px rgba(167, 25, 88, .25);
+}
+
+/* WhatsApp (agenda) */
+.btn-whatsapp {
+    background: #25d366;
+    color: var(--blanco);
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.btn-whatsapp:hover {
+    background: #1da851;
+}
+
+
+/* ==========================================================
+   4. MENÚ DE ARRIBA Y BARRA DEL PERSONAL
+   ========================================================== */
+
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    height: 72px;
+    padding: 0 5%;
+    background: rgba(255, 255, 255, .96);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 2px 15px rgba(80, 15, 45, .07);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.logo img {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--rosa);
+}
+
+.logo span {
+    font-family: var(--letra-titulos);
+    font-size: 21px;
+    font-weight: 700;
+    color: var(--vino);
+    white-space: nowrap;
+}
+
+.menu {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.menu a {
+    padding: 9px 16px;
+    border-radius: 25px;
+    color: var(--texto);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background .2s, color .2s;
+}
+
+.menu a:hover {
+    background: var(--rosa);
+    color: var(--vino);
+}
+
+/* Barra oscura del personal (solo con sesión) */
+.barra-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 5%;
+    background: var(--morado);
+}
+
+.barra-panel a {
+    color: var(--blanco);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 6px 8px;      /* 10 enlaces del administrador: que quepan en una línea */
+    border-radius: 20px;
+}
+
+.barra-panel a:hover {
+    background: rgba(255, 255, 255, .14);
+}
+
+.barra-panel-quien {
+    margin-right: auto;
+    color: var(--rosa-medio);
+    font-size: 12px;
+}
+
+
+/* ==========================================================
+   5. PORTADA (HERO) Y ESTADÍSTICAS
+   ========================================================== */
+
+.hero {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    align-items: center;
+    gap: 40px;
+    padding: 80px max(5%, calc((100% - var(--ancho)) / 2)) 110px;
+    background:
+        radial-gradient(circle at 85% 20%, rgba(255, 255, 255, .7), transparent 40%),
+        linear-gradient(120deg, #fff0f7, #f5d4e3);
+}
+
+.etiqueta {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, .75);
+    color: var(--vino);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.hero h1 {
+    margin: 18px 0 12px;
+    font-size: clamp(40px, 6vw, 64px);
+}
+
+.hero h1 span {
+    color: var(--vino);
+    font-style: italic;
+}
+
+.lema {
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--vino-oscuro);
+}
+
+.descripcion {
+    max-width: 480px;
+    margin: 8px 0 28px;
+    color: var(--gris);
+}
+
+.hero-botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+/* Logo redondo de la derecha */
+.logo-hero {
+    justify-self: center;
+    width: min(340px, 80%);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    padding: 14px;
+    background: var(--blanco);
+    box-shadow: 0 25px 60px rgba(130, 20, 75, .18);
+}
+
+.logo-hero img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Tres tarjetas que se montan sobre el final de la portada */
+.estadisticas {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    max-width: 900px;
+    margin: -55px auto 0;
+    padding: 0 20px;
+    position: relative;
+}
+
+.estadistica {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 22px;
+    background: var(--blanco);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+}
+
+.estadistica-icono {
+    display: grid;
+    place-items: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--rosa);
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.estadistica strong {
+    display: block;
+    font-size: 26px;
+    line-height: 1;
+    color: var(--vino);
+}
+
+.estadistica span {
+    font-size: 13px;
+    color: var(--gris);
+}
+
+
+/* ==========================================================
+   6. SECCIONES, SERVICIOS Y PASOS
+   ========================================================== */
+
+.seccion {
+    max-width: var(--ancho);
+    margin: 0 auto;
+    padding: 80px 20px 20px;
+}
+
+.titulo-seccion {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.titulo-seccion span {
+    color: var(--vino);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+}
+
+.titulo-seccion h2 {
+    margin: 8px 0;
+    font-size: clamp(28px, 4vw, 38px);
+}
+
+.titulo-seccion p {
+    color: var(--gris);
+}
+
+/* Tarjetas de servicios: se acomodan solas según el ancho */
+.servicios {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 22px;
+}
+
+.card-servicio {
+    display: flex;
+    flex-direction: column;
+    background: var(--blanco);
+    border-radius: var(--radio);
+    overflow: hidden;
+    box-shadow: var(--sombra-suave);
+    transition: transform .25s, box-shadow .25s;
+}
+
+.card-servicio:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--sombra);
+}
+
+.servicio-foto {
+    aspect-ratio: 4 / 3;
+    background: var(--crema);
+    overflow: hidden;
+}
+
+.servicio-foto img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .4s;
+}
+
+.card-servicio:hover .servicio-foto img {
+    transform: scale(1.05);
+}
+
+.servicio-foto img.sin-foto {
+    object-fit: contain;
+    padding: 25px;
+}
+
+.servicio-cuerpo {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 18px 20px 20px;
+}
+
+.servicio-cuerpo h3 {
+    font-size: 17px;
+    margin-bottom: 6px;
+}
+
+.servicio-cuerpo p {
+    flex: 1;
+    font-size: 13.5px;
+    color: var(--gris);
+}
+
+.servicio-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 14px 0;
+}
+
+.servicio-info strong {
+    font-size: 20px;
+    color: var(--vino);
+}
+
+.servicio-info span {
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: var(--rosa-claro);
+    font-size: 12px;
+    color: var(--gris);
+}
+
+/* Pasos */
+.pasos-seccion {
+    padding-bottom: 80px;
+}
+
+.pasos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+}
+
+.paso {
+    padding: 34px 26px;
+    text-align: center;
+    background: var(--blanco);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra-suave);
+}
+
+.paso-numero {
+    display: inline-grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 16px;
+    border-radius: 50%;
+    background: var(--vino);
+    color: var(--blanco);
+    font-family: var(--letra-titulos);
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.paso h3 {
+    font-size: 17px;
+    margin-bottom: 6px;
+}
+
+.paso p {
+    font-size: 14px;
+    color: var(--gris);
+}
+
+
+/* ==========================================================
+   7. ENCABEZADO DE LAS PÁGINAS INTERNAS
+   ========================================================== */
+
+.pagina-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 46px max(5%, calc((100% - var(--ancho)) / 2)) 70px;
+    background:
+        radial-gradient(circle at 90% 0%, rgba(167, 25, 88, .45), transparent 45%),
+        var(--morado);
+    color: var(--blanco);
+}
+
+.pagina-header span {
+    color: var(--rosa-medio);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.pagina-header h1 {
+    margin: 6px 0;
+    color: var(--blanco);
+    font-size: clamp(28px, 4vw, 40px);
+}
+
+.pagina-header p {
+    color: #e7cfdb;
+}
+
+
+/* ==========================================================
+   8. FORMULARIOS Y MENSAJES
+   ========================================================== */
+
+/* Contenido de las páginas internas: sube un poco sobre el encabezado oscuro */
+.panel-contenido,
+.form-section,
+.reserva-layout {
+    max-width: var(--ancho);
+    margin: -40px auto 60px;
+    padding: 0 20px;
+    position: relative;
+}
+
+/* Login y cambio de contraseña: tarjeta angosta y centrada */
+.form-section {
+    max-width: 480px;
+}
+
+.form-card {
+    padding: 30px;
+    background: var(--blanco);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+}
+
+.form-card h2 {
+    margin-bottom: 18px;
+    font-size: 24px;
+}
+
+.form-card form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+label {
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--morado);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="file"],
+select,
+textarea {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--borde);
+    border-radius: var(--radio-chico);
+    background: var(--blanco);
+    color: var(--texto);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--vino);
+    box-shadow: 0 0 0 4px rgba(167, 25, 88, .10);
+}
+
+select option:disabled {
+    color: #b3a7ad;
+}
+
+.form-card button[type="submit"] {
+    margin-top: 16px;
+}
+
+.nota {
+    font-size: 12px;
+    color: var(--gris);
+    line-height: 1.45;
+}
+
+/* Mensajes verde / rojo */
+.alerta {
+    padding: 13px 18px;
+    margin-bottom: 18px;
+    border-radius: var(--radio-chico);
+    font-size: 14px;
+    font-weight: 500;
+    border-left: 5px solid;
+}
+
+.alerta.exito {
+    color: #176b3c;
+    background: #e3f7eb;
+    border-color: var(--verde);
+}
+
+.alerta.error {
+    color: #9b2433;
+    background: #ffe7ea;
+    border-color: var(--rojo);
+}
+
+/* Interruptor de "Disponible" en Horarios */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 26px;
+    margin: 0;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.switch span {
+    position: absolute;
+    inset: 0;
+    border-radius: 26px;
+    background: #d9cdd3;
+    cursor: pointer;
+    transition: background .2s;
+}
+
+.switch span::before {
+    content: "";
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--blanco);
+    transition: transform .2s;
+}
+
+.switch input:checked + span {
+    background: var(--vino);
+}
+
+.switch input:checked + span::before {
+    transform: translateX(20px);
+}
+
+
+/* ==========================================================
+   9. PÁGINA DE RESERVAR
+   ========================================================== */
+
+.reserva-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+/* Sin esto, la fila de días (que se desliza de lado en el celular)
+   estira la columna y la página entera queda más ancha que la pantalla. */
+.reserva-layout > * {
+    min-width: 0;
+}
+
+/* ---------- Los pasos (1 día, 2 manicurista, 3 servicio, 4 hora, 5 datos) ---------- */
+
+.form-card .form-pasos {
+    gap: 26px;     /* .form-card form trae 6px: aquí los pasos van más separados */
+}
+
+.paso-reserva h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 21px;
+}
+
+.numero-paso {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--vino);
+    color: var(--blanco);
+    font-family: var(--letra);
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.paso-reserva .paso-espera {
+    margin: -4px 0 10px;
+}
+
+/* Paso que todavía no se puede usar: se ve apagado y no se puede tocar */
+.paso-reserva.bloqueado .numero-paso {
+    background: var(--rosa-medio);
+}
+
+.paso-reserva.bloqueado > :not(h2):not(.paso-espera) {
+    opacity: .35;
+    pointer-events: none;
+    filter: grayscale(.6);
+}
+
+.paso-reserva:not(.bloqueado) .solo-bloqueado {
+    display: none;
+}
+
+/* Botón escogido de cualquier paso (día, manicurista, servicio) */
+.dia-btn.escogida,
+.manicurista-btn.escogida,
+.servicio-btn.escogida {
+    border-color: var(--vino);
+    box-shadow: 0 0 0 3px rgba(167, 25, 88, .18);
+}
+
+/* ---------- Paso 1: días ---------- */
+
+.dias-botones {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.dia-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    padding: 8px 4px;
+    border: 1.5px solid var(--borde);
+    border-radius: var(--radio-chico);
+    background: var(--blanco);
+    color: var(--texto);
+    font-family: inherit;
+    cursor: pointer;
+    transition: background .15s, transform .15s;
+}
+
+.dia-btn small {
+    font-size: 11px;
+    color: var(--gris);
+    text-transform: capitalize;
+}
+
+.dia-btn strong {
+    font-size: 20px;
+    line-height: 1.1;
+    color: var(--morado);
+}
+
+.dia-btn:hover:not(:disabled) {
+    background: var(--rosa-claro);
+    transform: translateY(-1px);
+}
+
+.dia-btn.escogida {
+    background: var(--vino);
+}
+
+.dia-btn.escogida small,
+.dia-btn.escogida strong {
+    color: var(--blanco);
+}
+
+.dia-btn:disabled {
+    cursor: not-allowed;
+    background: #f3eef1;
+    opacity: .6;
+}
+
+.otra-fecha {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    font-weight: 500;
+    color: var(--gris);
+}
+
+.otra-fecha input {
+    width: auto;
+    padding: 7px 10px;
+}
+
+/* ---------- Paso 2: manicuristas con foto ---------- */
+
+.manicuristas-opciones {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+}
+
+.manicurista-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 10px 12px;
+    border: 1.5px solid var(--borde);
+    border-radius: var(--radio);
+    background: var(--blanco);
+    color: var(--morado);
+    font-family: inherit;
+    font-size: 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: background .15s, transform .15s;
+}
+
+.manicurista-btn:hover {
+    background: var(--rosa-claro);
+    transform: translateY(-2px);
+}
+
+.manicurista-btn img,
+.manicurista-btn .avatar-iniciales {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--rosa);
+}
+
+.manicurista-btn.escogida {
+    background: var(--rosa-claro);
+}
+
+.manicurista-btn.escogida img,
+.manicurista-btn.escogida .avatar-iniciales {
+    border-color: var(--vino);
+}
+
+/* Ya hay un servicio escogido y ella no lo hace */
+.manicurista-btn.no-hace {
+    opacity: .55;
+}
+
+.manicurista-aviso {
+    font-size: 11px;
+    color: var(--rojo);
+}
+
+.manicurista-aviso:empty {
+    display: none;
+}
+
+/* Círculo con las iniciales (manicurista sin foto) */
+.avatar-iniciales {
+    display: grid;
+    place-items: center;
+    background: linear-gradient(145deg, var(--rosa-medio), var(--vino));
+    color: var(--blanco);
+    font-family: var(--letra-titulos);
+    font-size: 28px;
+    font-weight: 700;
+}
+
+/* ---------- Paso 3: servicios ---------- */
+
+.servicios-opciones {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 10px;
+}
+
+.servicio-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border: 1.5px solid var(--borde);
+    border-radius: var(--radio-chico);
+    background: var(--blanco);
+    color: var(--texto);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background .15s;
+}
+
+.servicio-btn[hidden] {
+    display: none;
+}
+
+.servicio-btn:hover,
+.servicio-btn.escogida {
+    background: var(--rosa-claro);
+}
+
+.servicio-btn img {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.servicio-btn-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.servicio-btn-texto strong {
+    font-size: 14px;
+    color: var(--morado);
+}
+
+.servicio-btn-texto small {
+    font-size: 12px;
+    color: var(--vino);
+    font-weight: 600;
+}
+
+/* ---------- Paso 5: datos (de a dos por fila) ---------- */
+
+.datos-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 18px;
+    margin-bottom: 8px;
+}
+
+.campo-reserva {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Resumen antes de confirmar */
+.resumen-cita {
+    padding: 14px 16px;
+    border-radius: var(--radio-chico);
+    background: var(--rosa-claro);
+    border: 1.5px dashed var(--rosa-medio);
+    color: var(--morado);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.resumen-cita.completo {
+    border-style: solid;
+    border-color: var(--vino);
+}
+
+.resumen-cita::first-letter {
+    text-transform: uppercase;
+}
+
+/* ---------- Horas como botones ---------- */
+
+.horas-botones {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 8px;
+    padding: 12px;
+    border: 1.5px dashed var(--borde);
+    border-radius: var(--radio-chico);
+    background: var(--rosa-claro);
+}
+
+.horas-botones .nota,
+.horas-aviso {
+    grid-column: 1 / -1;
+}
+
+.hora-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 46px;
+    padding: 8px 6px;
+    border: 1.5px solid var(--rosa-medio);
+    border-radius: var(--radio-chico);
+    background: var(--blanco);
+    color: var(--vino);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, color .15s, transform .15s;
+}
+
+.hora-btn:hover:not(:disabled) {
+    background: var(--rosa);
+    transform: translateY(-1px);
+}
+
+/* La hora escogida (también con el mouse encima: si no, el hover la pinta rosada
+   y el texto blanco no se ve) */
+.hora-btn.escogida,
+.hora-btn.escogida:hover:not(:disabled) {
+    background: var(--vino);
+    border-color: var(--vino);
+    color: var(--blanco);
+    box-shadow: 0 4px 12px rgba(167, 25, 88, .25);
+}
+
+/* Botón «Ahora» del salón */
+.hora-btn.hora-ahora {
+    grid-column: span 2;
+    border-style: dashed;
+}
+
+/* Las que no se pueden tomar */
+.hora-btn:disabled {
+    cursor: not-allowed;
+    background: #f3eef1;
+    border-color: #e6dde2;
+    color: #b3a7ad;
+}
+
+.hora-btn small {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    color: #a7959e;
+}
+
+/* Tarjeta de la derecha */
+.reserva-info {
+    padding: 30px;
+    border-radius: var(--radio);
+    background: linear-gradient(160deg, var(--vino), var(--vino-oscuro));
+    color: var(--blanco);
+    box-shadow: var(--sombra);
+    position: sticky;
+    top: 90px;
+}
+
+.reserva-decoracion {
+    display: grid;
+    place-items: center;
+    width: 60px;
+    height: 60px;
+    margin-bottom: 14px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .15);
+    font-size: 28px;
+}
+
+.reserva-info h2 {
+    color: var(--blanco);
+    font-size: 26px;
+}
+
+.reserva-info p {
+    margin: 6px 0 18px;
+    color: #f4d6e4;
+}
+
+.info-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.info-lista div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.info-lista span {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--blanco);
+    color: var(--vino);
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+
+/* ==========================================================
+   10. TABLAS Y ESTADOS
+   ========================================================== */
+
+.tabla-contenedor {
+    background: var(--blanco);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+thead th {
+    padding: 14px 16px;
+    text-align: left;
+    background: var(--rosa-claro);
+    color: var(--vino);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    border-bottom: 2px solid var(--rosa);
+    white-space: nowrap;
+}
+
+tbody td {
+    padding: 13px 16px;
+    border-bottom: 1px solid #f5ebf0;
+    vertical-align: middle;
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+tbody tr:hover td {
+    background: #fffafc;
+}
+
+/* La primera columna (hora, día, foto...) nunca se parte en dos líneas */
+tbody td:first-child {
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.sin-datos {
+    padding: 40px;
+    text-align: center;
+    color: var(--gris);
+}
+
+/* Etiquetas de estado de la cita */
+.estado {
+    display: inline-block;
+    padding: 4px 11px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.estado-pendiente   { color: var(--amarillo); background: #fff3d6; }
+.estado-confirmada  { color: var(--verde);    background: #e3f8eb; }
+.estado-completada  { color: #6851b8;         background: #eee9ff; }
+.estado-no-asistio  { color: #666;            background: #eeeeee; }
+.estado-cancelada   { color: var(--rojo);     background: #ffe7ea; }
+
+/* Selector de estado dentro de la tabla */
+.form-estado select {
+    width: auto;
+    padding: 6px 10px;
+    font-size: 13px;
+}
+
+
+/* ==========================================================
+   11. AGENDA (PANEL)
+   ========================================================== */
+
+/* Barra de filtros (fecha y manicurista) */
+.filtros {
+    margin-bottom: 22px;
+    padding: 16px 20px;
+    background: var(--blanco);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+}
+
+.filtros form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+}
+
+.filtros label {
+    margin: 0;
+}
+
+.filtros input,
+.filtros select {
+    width: auto;
+    min-width: 170px;
+}
+
+.filtros .btn-principal {
+    padding: 10px 22px;
+    box-shadow: none;
+}
+
+.agenda-titulo {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.agenda-titulo span {
+    color: var(--vino);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.agenda-titulo h2 {
+    font-size: 28px;
+}
+
+.contador-citas {
+    padding: 8px 18px;
+    border-radius: 25px;
+    background: var(--blanco);
+    box-shadow: var(--sombra-suave);
+    color: var(--vino);
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.contador-citas span {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gris);
+}
+
+/* Horarios: el botón Guardar debajo de la tabla */
+.panel-contenido > form > .btn-principal {
+    margin-top: 20px;
+}
+
+
+/* ==========================================================
+   12. PÁGINAS DEL ADMINISTRADOR (servicios, manicuristas, usuarios)
+   ========================================================== */
+
+.admin-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+/* Sin esto, una tabla ancha estira toda la página en el celular */
+.admin-grid > * {
+    min-width: 0;
+}
+
+.admin-form {
+    position: sticky;
+    top: 90px;
+}
+
+.admin-form .btn-secundario {
+    margin-top: 8px;
+}
+
+.miniatura {
+    width: 54px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.miniatura-grande {
+    width: 100%;
+    max-height: 170px;
+    object-fit: cover;
+    border-radius: var(--radio-chico);
+}
+
+/* Foto de la manicurista en el panel (redonda) */
+.foto-manicurista {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    font-size: 17px;
+}
+
+/* En la lista: foto + nombre + qué hace, en una sola celda */
+.celda-manicurista {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 200px;
+}
+
+.celda-manicurista small {
+    display: block;
+    max-width: 200px;
+    white-space: normal;     /* las celdas de las tablas no parten el texto: esta sí */
+    color: var(--gris);
+    line-height: 1.4;
+}
+
+.celda-manicurista .foto-manicurista {
+    flex-shrink: 0;
+}
+
+.foto-manicurista-grande {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Bloqueos: «Desde» y «Hasta» lado a lado */
+.horas-bloqueo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.horas-bloqueo[hidden] {
+    display: none;
+}
+
+.horas-bloqueo div {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Agenda: franja con los ratos bloqueados del día */
+.bloqueos-dia {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    border-radius: var(--radio-chico);
+    background: #f3eef1;
+    border-left: 5px solid var(--gris);
+    font-size: 14px;
+}
+
+.bloqueos-dia span {
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--blanco);
+}
+
+.bloqueos-dia a {
+    margin-left: auto;
+    color: var(--vino);
+    font-weight: 600;
+}
+
+/* Casillas «¿Qué servicios hace?» */
+.casillas-servicios {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    border: 1.5px solid var(--borde);
+    border-radius: var(--radio-chico);
+}
+
+.casilla {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-weight: 500;
+    color: var(--texto);
+    cursor: pointer;
+}
+
+.casilla input {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--vino);
+}
+
+.acciones-fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.fila-inactiva td {
+    opacity: .5;
+}
+
+
+/* Marcas pequeñas en las tablas: "En el salón", "Pagada a la manicurista" */
+.marca {
+    display: inline-block;
+    margin-top: 3px;
+    padding: 1px 8px;
+    border-radius: 10px;
+    background: var(--rosa);
+    color: var(--vino-oscuro);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.marca-pagada {
+    background: #e3f8eb;
+    color: var(--verde);
+}
+
+/* Cita en el salón: tarjeta de ayuda */
+.lista-ayuda p {
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: var(--gris);
+}
+
+.lista-ayuda strong {
+    color: var(--morado);
+}
+
+
+/* ==========================================================
+   12b. PAGOS A MANICURISTAS
+   ========================================================== */
+
+/* Enlaces rápidos: esta quincena, quincena anterior, este mes */
+.atajos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.atajos a {
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: var(--rosa-claro);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.atajos a:hover {
+    background: var(--rosa);
+}
+
+/* Fila de totales al final de las tablas */
+tfoot td {
+    padding: 14px 16px;
+    background: var(--rosa-claro);
+    border-top: 2px solid var(--rosa);
+    font-weight: 600;
+}
+
+/* Botones debajo de una tabla (registrar pago, imprimir) */
+.barra-pago {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.historial {
+    margin-top: 40px;
+}
+
+.comprobante {
+    margin-bottom: 20px;
+}
+
+.comprobante-cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.comprobante-cabeza p {
+    color: var(--gris);
+    font-size: 13px;
+}
+
+/* Tabla dentro de una tarjeta: en el celular se desliza de lado sin estirar la página */
+.tabla-scroll {
+    overflow-x: auto;
+}
+
+.solo-imprimir {
+    display: none;
+}
+
+/* Al imprimir el comprobante: sin menú, sin botones, sin colores de fondo */
+@media print {
+
+    .navbar,
+    .barra-panel,
+    .pagina-header,
+    footer,
+    .alerta,
+    .no-imprimir {
+        display: none !important;
+    }
+
+    body {
+        background: #fff;
+    }
+
+    .panel-contenido {
+        margin: 0;
+        max-width: none;
+    }
+
+    .form-card {
+        box-shadow: none;
+        padding: 0;
+    }
+
+    .solo-imprimir {
+        display: block;
+        margin-top: 50px;
+    }
+}
+
+
+/* ==========================================================
+   12c. TARJETA DE FIDELIDAD
+   ========================================================== */
+
+/* Sellos: 9 puntos + el regalo */
+.sellos {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 4px 0;
+}
+
+.sellos span {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--rosa-medio);
+    background: var(--blanco);
+}
+
+.sellos span.lleno {
+    background: var(--vino);
+    border-color: var(--vino);
+}
+
+.sellos span.regalo {
+    width: auto;
+    height: auto;
+    border: none;
+    background: none;
+    font-size: 15px;
+    filter: grayscale(1);
+    opacity: .5;
+}
+
+.sellos span.regalo.lleno {
+    filter: none;
+    opacity: 1;
+}
+
+.marca-gratis {
+    background: #fff1d6;
+    color: #9a6400;
+}
+
+/* Cita en el salón: lo que se sabe de la clienta al escribir el celular */
+.info-clienta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 6px;
+    padding: 12px 14px;
+    border-radius: var(--radio-chico);
+    background: var(--rosa-claro);
+    border: 1.5px solid var(--rosa);
+    font-size: 13px;
+}
+
+.info-clienta strong {
+    font-size: 15px;
+    color: var(--morado);
+}
+
+.info-clienta.nueva {
+    background: #f4f4f4;
+    border-color: #e2e2e2;
+    color: var(--gris);
+}
+
+.info-clienta.gratis {
+    background: #fff6e0;
+    border-color: #f1d08a;
+}
+
+.usar-gratis {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: var(--radio-chico);
+    background: #fff6e0;
+    color: #7a5200;
+}
+
+.usar-gratis input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--vino);
+}
+
+/* Reservar: aviso de la tarjeta dentro de la tarjeta vino */
+.promo-fidelidad {
+    display: block !important;
+    margin-top: 10px;
+    padding: 12px 14px;
+    border-radius: var(--radio-chico);
+    background: rgba(255, 255, 255, .14);
+    line-height: 1.5;
+}
+
+.promo-fidelidad span {
+    display: inline !important;
+    background: none !important;
+    font-size: 18px !important;
+    margin-right: 4px;
+}
+
+.promo-fidelidad strong {
+    display: block;
+    color: var(--blanco);
+}
+
+/* Inicio: franja de la tarjeta */
+.promo {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    max-width: var(--ancho);
+    margin: 60px auto 0;
+    padding: 28px 34px;
+    border-radius: var(--radio);
+    background: linear-gradient(120deg, var(--vino), var(--vino-oscuro));
+    color: var(--blanco);
+    box-shadow: var(--sombra);
+}
+
+.promo-icono {
+    font-size: 44px;
+}
+
+.promo div {
+    flex: 1;
+}
+
+.promo h2 {
+    color: var(--blanco);
+    font-size: 28px;
+}
+
+.promo p {
+    color: #f4d6e4;
+}
+
+.btn-blanco {
+    display: inline-flex;
+    padding: 12px 24px;
+    border-radius: 30px;
+    background: var(--blanco);
+    color: var(--vino);
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-blanco:hover {
+    background: var(--rosa);
+}
+
+
+/* ==========================================================
+   13. PIE DE PÁGINA
+   ========================================================== */
+
+footer {
+    margin-top: 40px;
+    padding: 40px 5% 30px;
+    background: var(--morado);
+    color: #e7cfdb;
+}
+
+.footer-contenido {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    max-width: var(--ancho);
+    margin: 0 auto;
+    font-size: 14px;
+}
+
+.footer-contenido h3 {
+    margin-bottom: 4px;
+    color: var(--blanco);
+    font-family: var(--letra-titulos);
+    font-size: 22px;
+}
+
+.footer-contenido div:last-child {
+    text-align: right;
+}
+
+
+/* ==========================================================
+   14. CELULAR Y TABLET
+   ========================================================== */
+
+/* Tablet */
+@media (max-width: 960px) {
+
+    .hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+        padding-top: 50px;
+    }
+
+    .descripcion {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .hero-botones {
+        justify-content: center;
+    }
+
+    .logo-hero {
+        width: 230px;
+        grid-row: 1;
+    }
+
+    .reserva-layout,
+    .admin-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .reserva-info,
+    .admin-form {
+        position: static;
+    }
+}
+
+/* Celular */
+@media (max-width: 680px) {
+
+    body {
+        font-size: 14px;
+    }
+
+    .navbar {
+        height: auto;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 14px;
+    }
+
+    .logo span {
+        font-size: 18px;
+    }
+
+    .menu a {
+        padding: 7px 12px;
+        font-size: 13px;
+    }
+
+    .btn-reserva {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+
+    .barra-panel {
+        justify-content: center;
+        padding: 8px 10px;
+    }
+
+    .barra-panel-quien {
+        width: 100%;
+        margin: 0;
+        text-align: center;
+    }
+
+    .estadisticas,
+    .pasos {
+        grid-template-columns: 1fr;
+    }
+
+    .estadisticas {
+        margin-top: -40px;
+        gap: 10px;
+    }
+
+    .estadistica {
+        padding: 14px 18px;
+    }
+
+    .seccion {
+        padding-top: 55px;
+    }
+
+    .servicios {
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+
+    .servicio-cuerpo {
+        padding: 14px;
+    }
+
+    .servicio-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .pagina-header {
+        padding: 32px 18px 60px;
+    }
+
+    .form-card {
+        padding: 22px 18px;
+    }
+
+    .datos-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* 14 días: en el celular, una fila que se desliza de lado */
+    .dias-botones {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 6px;
+    }
+
+    .dia-btn {
+        min-width: 58px;
+    }
+
+    .manicuristas-opciones {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .manicurista-btn img,
+    .manicurista-btn .avatar-iniciales {
+        width: 70px;
+        height: 70px;
+    }
+
+    .filtros input,
+    .filtros select {
+        flex: 1;
+        min-width: 140px;
+    }
+
+    .agenda-titulo h2 {
+        font-size: 22px;
+    }
+
+    .footer-contenido {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .footer-contenido div:last-child {
+        text-align: center;
+    }
+}
+
+/* Franja de la tarjeta en celular: en columna */
+@media (max-width: 680px) {
+
+    .promo {
+        flex-direction: column;
+        text-align: center;
+        margin: 40px 16px 0;
+        padding: 24px 20px;
+    }
+}
+
+/* Celular muy angosto: servicios de a uno */
+@media (max-width: 400px) {
+
+    .servicios {
+        grid-template-columns: 1fr;
+    }
+}
